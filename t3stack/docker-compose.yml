@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: zonaka-db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: zonaka
+    ports:
+      - "5436:5432"
+
+volumes:
+  postgres-data:
+    driver: local

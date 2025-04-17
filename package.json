@@ -1,0 +1,14 @@
+{
+  "name": "zonaka",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:t3stack\" \"npm run dev:canister\"",
+    "dev:t3stack": "npm run dev --prefix t3stack",
+    "dev:canister": "cd canister && dfx start --background",
+    "build": "npm run build --prefix t3stack",
+    "deploy:canister": "cd canister && dfx deploy --playground"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
