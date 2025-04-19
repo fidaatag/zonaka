@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { HydrateClient } from "@/trpc/server";
 
 export default async function Home() {
@@ -7,6 +8,7 @@ export default async function Home() {
       <div>
         "Hello world!"
       </div>
+      <Button>Ok button</Button>
     </HydrateClient>
   );
 }
