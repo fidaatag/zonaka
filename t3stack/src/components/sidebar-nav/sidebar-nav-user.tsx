@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/sidebar"
 
 export function SidebarNavUser({
-  user,
 }: {
   user: {
     name: string

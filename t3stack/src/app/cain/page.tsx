@@ -13,9 +13,9 @@ export default function Home() {
   return (
     <div className="p-4">
       <form
-        onSubmit={(e) => {
+        onSubmit={ async (e) => {
           e.preventDefault();
-          greetMutation.refetch();
+          await greetMutation.refetch();
         }}
       >
         <input
