@@ -21,7 +21,8 @@ export function HeroCanvas() {
           <div className="relative flex items-center whitespace-nowrap rounded-full border bg-popover px-3 py-1 text-xs leading-6  text-primary/60 ">
             <Shapes className="h-5 p-1" /> Introducing Dicons.
             <a
-              href="/products/dicons"
+              href="/board"
+              target="_blank"
               rel="noreferrer"
               className="ml-1 flex items-center font-semibold"
             >
@@ -76,7 +77,7 @@ export function HeroCanvas() {
             to empower others.
           </p>
           <div className="flex justify-center gap-2">
-            <Link href={"/dashboard"}>
+            <Link href={"/board"}>
               <Button variant="default" size="lg">
                 Start Project
               </Button>
