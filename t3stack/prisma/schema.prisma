@@ -14,17 +14,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
 
 // Necessary for Next auth
 model Account {
@@ -54,21 +43,180 @@ model Session {
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
-}
-
 model VerificationToken {
     identifier String
     token      String   @unique
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+
+// personal
+
+enum Role {
+  PARENT
+  SCHOOL
+  PARTNER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  role          Role  @default(PARENT)
+  parent        Parent?
+  school        School?
+  partner       Partner?
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  full       String
+  postalCode String
+  latitude   Float
+  longitude  Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relasi balik (dibutuhkan oleh Prisma karena digunakan di entitas lain)
+  parents    Parent[]
+  students   Student[]
+  schools    School[]
+  partners   Partner[]
+}
+
+
+// role personal
+
+model Parent {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  name       String
+  addressId  String
+  address    Address  @relation(fields: [addressId], references: [id])
+  students   Student[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Student {
+  id             String           @id @default(uuid())
+  name           String
+  birthDate      DateTime
+  gender         Gender?
+  isFinalized    Boolean          @default(false)
+  icpIdentity    String?
+  photoUrl       String?
+
+  addressId      String
+  address        Address          @relation(fields: [addressId], references: [id])
+  parentId       String
+  parent         Parent           @relation(fields: [parentId], references: [id])
+
+  // academic record
+  grades          Grade[]
+  schoolHistory  SchoolHistory[]
+
+  // chain tracker
+  chainHistory   ChainPushHistory[]
+  latestChainVersion Int         @default(0)
+  lastPushedAt       DateTime?
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+
+model School {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  addressId   String
+  address     Address  @relation(fields: [addressId], references: [id])
+  description String?
+  facilities  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Partner {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  service     String
+  description String?
+  addressId   String
+  address     Address  @relation(fields: [addressId], references: [id])
+  contact     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+
+// academic record
+
+enum EducationLevel {
+  SD
+  SMP
+  SMA
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+
+model SchoolHistory {
+  id             String           @id @default(uuid())
+  studentId      String
+  student        Student          @relation(fields: [studentId], references: [id])
+  schoolName     String
+  educationLevel EducationLevel
+  entryYear      Int
+  graduationYear Int?
+  isCurrent      Boolean          @default(false) // status sekarang
+  notes          String?          // alasan pindah, catatan, dll
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Grade {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+
+  year       Int      // Tahun ajaran, misal 2024
+  semester   Int      // 1 atau 2
+  subject    String   // Misal: Matematika, IPA, Bahasa
+  score      Float    // Nilai
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+
+// chain tracker
+
+model ChainPushHistory {
+  id           String   @id @default(uuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id])
+  version      Int
+  pushedAt     DateTime @default(now())
+  snapshot     Json
+  notes        String?
+  chainTxId    String?
+  explorerUrl  String?
+  createdAt    DateTime @default(now())
 }
