@@ -140,13 +140,13 @@ const data = {
   ],
   projects: [
     {
-      name: "Design Engineering",
-      url: "#",
+      name: "Board",
+      url: "/board",
       icon: Frame,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
+      name: "Student",
+      url: "/board/student",
       icon: PieChart,
     },
     {
