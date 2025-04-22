@@ -1,6 +1,8 @@
 import CardCountingBoard from "@/components/card-counting-board";
+import { DialogTamabahAnak } from "@/components/dialog-tambah-anak";
 import { Button } from "@/components/ui/button";
 import { authOptions } from "@/server/auth/config";
+import { Dialog } from "@radix-ui/react-dialog";
 import { Users } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -29,9 +31,7 @@ export default async function PageBoard() {
           </p>
         </div>
 
-        <Button className="self-start md:self-auto">
-          Tambah Anak
-        </Button>
+        <DialogTamabahAnak />
 
       </section>
 
