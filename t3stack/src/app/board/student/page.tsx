@@ -1,9 +1,10 @@
 'use client'
 
 import { CardStudent, type StudentProps, } from "@/components/card-student"
+import Link from "next/link";
 
 export default function PageStudent() {
-  const dummyStudents : StudentProps[] = [
+  const dummyStudents: StudentProps[] = [
     {
       name: "Aisyah Putri",
       birthDate: "2015-05-12",
@@ -57,7 +58,12 @@ export default function PageStudent() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {dummyStudents.map((student, index) => (
-          <CardStudent key={index} student={student} />
+          <Link
+            href={`/board/student/123`}
+            key={index}
+          >
+            <CardStudent key={index} student={student} />
+          </Link>
         ))}
       </section>
     </div>
