@@ -33,7 +33,7 @@ export function CardStudent({ student }: StudentCardProps) {
   const age = differenceInYears(new Date(), birthDate)
 
   return (
-    <Card className="p-0 flex flex-col h-full w-full max-w-sm overflow-hidden border-2 hover:shadow-md transition-all">
+    <Card className="p-0 flex flex-col h-full w-full max-w-lg overflow-hidden border-2 hover:shadow-md transition-all">
 
       <CardHeader className={`${colorMap[student.educationLevel]} text-white p-4 flex flex-row items-center justify-between`}>
         <div>
