@@ -150,8 +150,13 @@ const data = {
       icon: PieChart,
     },
     {
-      name: "Travel",
-      url: "#",
+      name: "Prediction",
+      url: "/board/prediction",
+      icon: Map,
+    },
+    {
+      name: "Cain",
+      url: "/cain",
       icon: Map,
     },
   ],
