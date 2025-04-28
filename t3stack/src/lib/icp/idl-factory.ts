@@ -14,13 +14,15 @@ export const idlFactory = ({ IDL }: any) => {
     predict: IDL.Func(
       [
         IDL.Record({
-          latitude: IDL.Float64,
-          longitude: IDL.Float64,
           averageScore: IDL.Float64,
+          distanceToSchoolA: IDL.Float64,
+          distanceToSchoolB: IDL.Float64,
+          distanceToSchoolC: IDL.Float64,
         }),
       ],
       [IDL.Text],
       [],
     ),
+    
   });
 };

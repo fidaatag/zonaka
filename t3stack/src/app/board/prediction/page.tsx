@@ -9,9 +9,10 @@ export default function PredictionPage() {
   const { login, logout, whoami, principal, isAuthenticated, authClientReady, actor } = useIcpAuth();
 
   const [formData, setFormData] = useState<PredictInput>({
-    latitude: 0,
-    longitude: 0,
     averageScore: 0,
+    distanceToSchoolA: 0,
+    distanceToSchoolB: 0,
+    distanceToSchoolC: 0,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +46,6 @@ export default function PredictionPage() {
   return (
     <>
       <div className="p-4 space-y-4">
-        {/* ICP Auth Section */}
         {!isAuthenticated ? (
           <Button onClick={login} disabled={!authClientReady}>
             {authClientReady ? "Connect to Internet Identity" : "Loading ICP..."}
@@ -72,36 +72,6 @@ export default function PredictionPage() {
         <h1 className="text-2xl font-bold mb-4">Predict Form</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">Latitude</label>
-            <input
-              type="number"
-              name="latitude"
-              value={formData.latitude}
-              onChange={handleChange}
-              step="0.00001"
-              className="w-full p-2 border rounded"
-              required
-              min={-90}
-              max={90}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">Longitude</label>
-            <input
-              type="number"
-              name="longitude"
-              value={formData.longitude}
-              onChange={handleChange}
-              step="0.00001"
-              className="w-full p-2 border rounded"
-              required
-              min={-180}
-              max={180}
-            />
-          </div>
-
-          <div>
             <label className="block mb-1">Average Score</label>
             <input
               type="number"
@@ -113,6 +83,48 @@ export default function PredictionPage() {
               required
               min={0}
               max={100}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Distance to Sekolah A (in km)</label>
+            <input
+              type="number"
+              name="distanceToSchoolA"
+              value={formData.distanceToSchoolA}
+              onChange={handleChange}
+              step="0.01"
+              className="w-full p-2 border rounded"
+              required
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Distance to Sekolah B (in km)</label>
+            <input
+              type="number"
+              name="distanceToSchoolB"
+              value={formData.distanceToSchoolB}
+              onChange={handleChange}
+              step="0.01"
+              className="w-full p-2 border rounded"
+              required
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Distance to Sekolah C (in km)</label>
+            <input
+              type="number"
+              name="distanceToSchoolC"
+              value={formData.distanceToSchoolC}
+              onChange={handleChange}
+              step="0.01"
+              className="w-full p-2 border rounded"
+              required
+              min={0}
             />
           </div>
 
