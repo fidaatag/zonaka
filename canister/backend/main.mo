@@ -5,8 +5,12 @@ import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Float "mo:base/Float";
+import Map "mo:base/HashMap";
 
 actor {
+
+  stable var predictions : [Predict.PredictionHistory] = [];
+
   public query func greet(name : Text) : async Text {
     return "Hello, " # name # "!";
   };
@@ -82,7 +86,41 @@ actor {
 
     let recommendedSchool = findBestSchool(input);
 
-    return "Halo " # userPrincipal # ", rekomendasi sekolahmu adalah: " # recommendedSchool;
+    let result = "Halo " # userPrincipal # ", rekomendasi sekolahmu adalah: " # recommendedSchool;
+
+    recordPrediction(caller, result);
+
+    return result;
   };
+
+  func recordPrediction(user : Principal, predictionResult : Text) {
+    var found = false;
+    var updated : [Predict.PredictionHistory] = [];
+
+    for (entry in predictions.vals()) {
+      if (entry.user == user) {
+        let newHistory = Array.append<Text>(entry.history, [predictionResult]);
+        updated := Array.append(updated, [{ user = user; history = newHistory }]);
+        found := true;
+      } else {
+        updated := Array.append(updated, [entry]);
+      };
+    };
+
+    if (not found) {
+      updated := Array.append(updated, [{ user = user; history = [predictionResult] }]);
+    };
+
+    predictions := updated;
+  };
+
+  public query ({ caller }) func getMyPredictions() : async [Text] {
+    for (entry in predictions.vals()) {
+      if (entry.user == caller) {
+        return entry.history;
+      };
+    };
+    return [];
+  }
 
 };

@@ -15,4 +15,9 @@ module {
     distanceToSchoolC : Float;
     // (prestasi bisa ditambahkan opsional nanti)
   };
+
+  public type PredictionHistory = {
+    user : Principal;
+    history : [Text];
+  };
 };

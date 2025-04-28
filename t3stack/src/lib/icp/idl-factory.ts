@@ -9,7 +9,7 @@ export const idlFactory = ({ IDL }: any) => {
   return IDL.Service({
     // Define your canister methods here
     // Example: greet: IDL.Func([IDL.Text], [IDL.Text], []),
-    greet : IDL.Func([IDL.Text], [IDL.Text], ['query']),
+    greet: IDL.Func([IDL.Text], [IDL.Text], ['query']),
 
     predict: IDL.Func(
       [
@@ -23,6 +23,12 @@ export const idlFactory = ({ IDL }: any) => {
       [IDL.Text],
       [],
     ),
-    
+
+    getMyPredictions: IDL.Func(
+      [],
+      [IDL.Vec(IDL.Text)],
+      ['query']
+    ),
+
   });
 };

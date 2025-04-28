@@ -43,6 +43,24 @@ export default function PredictionPage() {
     }
   };
 
+  const handleFetchHistory = async () => {
+    if (!actor) {
+      console.error('Actor belum siap');
+      alert('Actor belum siap. Silakan login terlebih dahulu.');
+      return;
+    }
+
+    try {
+      const result = await actor.getMyPredictions();
+      console.log('Prediction History:', result);
+      alert('History Prediksi:\n' + result.join("\n"));
+    } catch (error) {
+      console.error('Failed to fetch history:', error);
+      alert('Error: ' + (error as Error).message);
+    }
+  };
+
+
   return (
     <>
       <div className="p-4 space-y-4">
@@ -136,6 +154,11 @@ export default function PredictionPage() {
           </Button>
         </form>
       </div>
+
+      <Button onClick={handleFetchHistory} disabled={!isAuthenticated}>
+        Lihat Riwayat Prediksi
+      </Button>
+
     </>
   );
 }
