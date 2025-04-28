@@ -1,9 +1,12 @@
+"use client"; // ⬅️ HARUS di atas sendiri!
+
+
 import { env } from '@/env';
-import { Actor, HttpAgent } from '@dfinity/agent';
+import { Actor, HttpAgent, type Identity } from '@dfinity/agent';
 import { idlFactory } from './idl-factory';
 
 // Replace with your canister ID
-const CANISTER_ID = env.IC_CANISTER_ID;
+const CANISTER_ID = env.NEXT_PUBLIC_IC_CANISTER_ID;
 
 let agent: HttpAgent | null = null;
 
@@ -14,7 +17,7 @@ let agent: HttpAgent | null = null;
 async function initAgent() {
   try {
     agent = await HttpAgent.create({
-      host: env.IC_HOST, // Mainnet or local replica host
+      host: env.NEXT_PUBLIC_IC_HOST, // Mainnet or local replica host
     });
 
     // Remove this line in production to avoid fetching the root key
@@ -34,14 +37,24 @@ await initAgent();
  * Create an actor to interact with the canister.
  * Throws an error if the agent is not available.
  */
-export const createActor = (canisterId: string = CANISTER_ID) => {
-  if (!agent) {
+export const createActor = async (identity?: Identity) => {
+
+  const actorAgent = identity
+    ? await HttpAgent.create({ host: env.NEXT_PUBLIC_IC_HOST, identity })
+    : agent;
+
+  if (!actorAgent) {
     throw new Error('Agent is not initialized. Cannot create actor.');
   }
 
+  // If creating a new agent with identity in dev, fetch root key again
+  if (identity && env.NODE_ENV !== 'production') {
+    actorAgent.fetchRootKey();
+  }
+
   return Actor.createActor(idlFactory, {
-    agent,
-    canisterId,
+    agent: actorAgent,
+    canisterId: CANISTER_ID,
   });
 };
 
