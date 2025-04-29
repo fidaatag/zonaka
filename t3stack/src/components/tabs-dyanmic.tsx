@@ -14,10 +14,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { SelectDemo } from "./select-school"
+import { SelectSekolah } from "./select-school"
 import { DialogTambahNilai } from "./dialog-tambah-nilai"
 
 interface TabItem {
@@ -54,7 +51,7 @@ export function DynamicTabs({ data }: DynamicTabsProps) {
           ))}
         </TabsList>
 
-        <SelectDemo />
+        <SelectSekolah />
       </div>
 
       {data.map((tab) => (
