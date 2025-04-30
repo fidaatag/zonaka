@@ -18,9 +18,11 @@ export function TabsAcademic() {
   const sekolahList = academicData.find(j => j.jenjang === selectedJenjang)?.sekolah || [];
   const currentSekolah = sekolahList.find(s => s.nama === selectedSekolah);
 
-  const handleAddAcademicData = (data: FormSchemaType & { total: number; average: string }) => {
+  const handleAddAcademicData = (
+    data: FormSchemaType & { total: number; average: string }
+  ) => {
     setAcademicData((prev) => {
-      const jenjangIndex = prev.findIndex(j => j.jenjang === data.jenjang)
+      const jenjangIndex = prev.findIndex((j) => j.jenjang === data.jenjang);
       const newSemester: Semester = {
         kelas: parseInt(data.kelas),
         semester: parseInt(data.semester),
@@ -28,36 +30,57 @@ export function TabsAcademic() {
           { mapel: "Bahasa Indonesia", skor: data.bahasaIndonesia },
           { mapel: "Matematika", skor: data.matematika },
           { mapel: "IPA", skor: data.ipa },
-          ...(data.jenjang !== "sd" ? [{ mapel: "Bahasa Inggris", skor: data.bahasaInggris ?? 0 }] : [])
-        ]
-      }
+          ...(data.jenjang !== "sd"
+            ? [{ mapel: "Bahasa Inggris", skor: data.bahasaInggris ?? 0 }]
+            : []),
+        ],
+      };
 
+      // Jika jenjang belum ada, tambahkan
       if (jenjangIndex === -1) {
-        return [...prev, {
-          jenjang: data.jenjang,
-          sekolah: [{ nama: data.sekolah, semester: [newSemester] }]
-        }]
+        return [
+          ...prev,
+          {
+            jenjang: data.jenjang,
+            sekolah: [{ nama: data.sekolah, semester: [newSemester] }],
+          },
+        ];
       }
 
-      const jenjang = prev[jenjangIndex]!
-      const sekolahIndex = jenjang.sekolah.findIndex(s => s.nama === data.sekolah)!
+      const jenjang = prev[jenjangIndex]!;
+      const sekolahIndex = jenjang.sekolah.findIndex(
+        (s) => s.nama === data.sekolah
+      );
 
+      // Jika sekolah belum ada, tambahkan
       if (sekolahIndex === -1) {
-        jenjang.sekolah.push({ nama: data.sekolah, semester: [newSemester] })
+        jenjang.sekolah.push({ nama: data.sekolah, semester: [newSemester] });
       } else {
-        if (jenjang.sekolah[sekolahIndex]) {
-          jenjang.sekolah[sekolahIndex].semester.push(newSemester)
+        const semesterList = jenjang.sekolah[sekolahIndex]!.semester;
+        const existingIndex = semesterList.findIndex(
+          (s) =>
+            s.kelas === newSemester.kelas &&
+            s.semester === newSemester.semester
+        );
+
+        if (existingIndex !== -1) {
+          // Replace jika sudah ada
+          semesterList[existingIndex] = newSemester;
+        } else {
+          // Push jika belum ada
+          semesterList.push(newSemester);
         }
       }
 
-      const updated = [...prev]
-      updated[jenjangIndex] = jenjang
-      return updated
-    })
+      const updated = [...prev];
+      updated[jenjangIndex] = jenjang;
+      return updated;
+    });
 
-    setJenjang(data.jenjang)
-    setSekolah(data.sekolah)
-  }
+    setJenjang(data.jenjang);
+    setSekolah(data.sekolah);
+  };
+
 
   return (
     <Tabs value={selectedJenjang} onValueChange={(val) => setJenjang(val as Jenjang)} className="w-full">
