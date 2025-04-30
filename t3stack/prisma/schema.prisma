@@ -96,18 +96,18 @@ model Address {
   partners Partner[]
 }
 
-
 model Parent {
-  id          String          @id @default(uuid())
-  userId      String          @unique
-  user        User            @relation(fields: [userId], references: [id])
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
   name        String
   phoneNumber String
   addressId   String
-  address     Address         @relation(fields: [addressId], references: [id])
+  address     Address   @relation(fields: [addressId], references: [id])
   relations   String // Ayah, Ibu, Wali
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  students    Student[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Student {
@@ -123,6 +123,9 @@ model Student {
 
   addressId String
   address   Address @relation(fields: [addressId], references: [id])
+
+  parentId String?
+  parent   Parent? @relation(fields: [parentId], references: [id])
 
   grades        Grade[]
   schoolHistory SchoolHistory[]
