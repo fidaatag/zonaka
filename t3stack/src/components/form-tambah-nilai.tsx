@@ -51,27 +51,27 @@ export default function FormTambahNilai({
 }: FormTambahNilaiProps) {
   const defaultValues: FormSchemaType = editData
     ? {
-        id: editData.id,
-        jenjang: jenjangAktif ?? "sd",
-        sekolah: sekolahAktif ?? "",
-        kelas: String(editData.kelas),
-        semester: String(editData.semester) as "1" | "2",
-        bahasaIndonesia: editData.nilai.find(n => n.mapel === "Bahasa Indonesia")?.skor ?? 0,
-        matematika: editData.nilai.find(n => n.mapel === "Matematika")?.skor ?? 0,
-        ipa: editData.nilai.find(n => n.mapel === "IPA")?.skor ?? 0,
-        bahasaInggris: editData.nilai.find(n => n.mapel === "Bahasa Inggris")?.skor,
-      }
+      id: editData.id,
+      jenjang: jenjangAktif ?? "sd",
+      sekolah: sekolahAktif ?? "",
+      kelas: String(editData.kelas),
+      semester: String(editData.semester) as "1" | "2",
+      bahasaIndonesia: editData.nilai.find(n => n.mapel === "Bahasa Indonesia")?.skor ?? 0,
+      matematika: editData.nilai.find(n => n.mapel === "Matematika")?.skor ?? 0,
+      ipa: editData.nilai.find(n => n.mapel === "IPA")?.skor ?? 0,
+      bahasaInggris: editData.nilai.find(n => n.mapel === "Bahasa Inggris")?.skor,
+    }
     : {
-        id: undefined,
-        jenjang: "sd",
-        sekolah: "",
-        kelas: "",
-        semester: "1",
-        bahasaIndonesia: 0,
-        matematika: 0,
-        ipa: 0,
-        bahasaInggris: 0,
-      };
+      id: undefined,
+      jenjang: "sd",
+      sekolah: "",
+      kelas: "",
+      semester: "1",
+      bahasaIndonesia: 0,
+      matematika: 0,
+      ipa: 0,
+      bahasaInggris: 0,
+    };
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -101,6 +101,15 @@ export default function FormTambahNilai({
     smp: ["7", "8", "9"],
     sma: ["10", "11", "12"],
   };
+
+  useEffect(() => {
+    const validKelas = kelasMap[watchJenjang];
+    const currentKelas = form.getValues("kelas");
+    if (!validKelas.includes(currentKelas)) {
+      form.setValue("kelas", validKelas[0]!);
+    }
+  }, [watchJenjang]);
+
 
   const handleSubmitForm = (data: FormSchemaType) => {
     onSubmit({ ...data, total, average });
