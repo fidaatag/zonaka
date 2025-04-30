@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card"
 import { SelectSchool } from "./select-school"
 import { TabsSemester } from "./tabs-semester"
 import type { JenjangData } from "./data-dummy"
+import { DialogTambahNilai } from "./dialog-tambah-nilai"
 
 interface Props {
   data: JenjangData[]
@@ -66,6 +67,8 @@ export function TabsAcademic({ data }: Props) {
           </Card>
         </TabsContent>
       ))}
+
+      <DialogTambahNilai />
     </Tabs>
   )
 }

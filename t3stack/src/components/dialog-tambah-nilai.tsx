@@ -15,7 +15,7 @@ export function DialogTambahNilai() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="self-start md:self-auto">
+        <Button className="self-start md:self-auto w-fit">
           Tambah Nilai
         </Button>
       </DialogTrigger>
@@ -26,7 +26,7 @@ export function DialogTambahNilai() {
         className="overflow-y-scroll lg:overflow-auto max-h-screen"
       >
         <DialogHeader>
-          <DialogTitle>Tambah Anak</DialogTitle>
+          <DialogTitle>Tambah Nilai</DialogTitle>
           <DialogDescription>
             Silakan isi informasi dasar orang tua dan anak. 
             Data ini akan digunakan untuk membuat profil anak dalam sistem Zonaka.
