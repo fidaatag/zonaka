@@ -1,22 +1,13 @@
-// File: components/select-school.tsx
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectLabel,
-  SelectItem,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-interface Props {
-  schools: string[]
-  selected: string
-  onChange: (val: string) => void
+interface SelectSchoolProps {
+  schools: string[];
+  selected: string;
+  onChange: (val: string) => void;
 }
 
-export function SelectSchool({ schools, selected, onChange }: Props) {
+export default function SelectSchool({ schools, selected, onChange }: SelectSchoolProps) {
   return (
     <div className="flex gap-2 items-center">
       <Label htmlFor="sekolah">Pilih Sekolah</Label>
@@ -25,16 +16,11 @@ export function SelectSchool({ schools, selected, onChange }: Props) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectGroup>
-            <SelectLabel>Daftar Sekolah</SelectLabel>
-            {schools.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectGroup>
+          {schools.map((s) => (
+            <SelectItem key={s} value={s}>{s}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>
-  )
+  );
 }

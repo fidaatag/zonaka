@@ -1,41 +1,33 @@
 'use client'
 
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { FormTambahNilai } from "./form-tambah-nilai"
+import { useState } from "react";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import FormTambahNilai from "./form-tambah-nilai";
 
-export function DialogTambahNilai() {
+interface DialogTambahNilaiProps {
+  onSubmit: (data: any) => void;
+}
+
+export default function DialogTambahNilai({ onSubmit }: DialogTambahNilaiProps) {
+  const [open, setOpen] = useState(false);
+  const handleSubmit = (data: any) => {
+    onSubmit(data);
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="self-start md:self-auto w-fit">
-          Tambah Nilai
-        </Button>
+        <Button>Tambah Nilai</Button>
       </DialogTrigger>
-      <DialogContent
-        onInteractOutside={(e) => {
-          e.preventDefault();
-        }}
-        className="overflow-y-scroll lg:overflow-auto max-h-screen"
-      >
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="overflow-y-scroll max-h-screen">
         <DialogHeader>
           <DialogTitle>Tambah Nilai</DialogTitle>
-          <DialogDescription>
-            Silakan isi informasi dasar orang tua dan anak. 
-            Data ini akan digunakan untuk membuat profil anak dalam sistem Zonaka.
-          </DialogDescription>
-
+          <DialogDescription>Masukkan nilai dan info sekolah</DialogDescription>
         </DialogHeader>
-
-        <FormTambahNilai />
+        <FormTambahNilai onSubmit={handleSubmit} />
       </DialogContent>
     </Dialog>
-  )
+  );
 }
