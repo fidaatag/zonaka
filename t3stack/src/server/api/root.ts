@@ -1,5 +1,7 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { cainRouter } from "./routers/cain";
+import { studentRouter } from "./routers/student";
+import { parentRouter } from "./routers/parent";
 
 /**
  * This is the primary router for your server.
@@ -7,7 +9,9 @@ import { cainRouter } from "./routers/cain";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  cain: cainRouter
+  cain: cainRouter,
+  student: studentRouter,
+  parent: parentRouter,
 });
 
 // export type definition of API

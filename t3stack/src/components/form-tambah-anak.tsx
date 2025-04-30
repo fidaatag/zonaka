@@ -1,18 +1,13 @@
-'use client'
+"use client"
 
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-
+import { api } from "@/trpc/react"
 import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
+  Form, FormField, FormItem, FormLabel, FormControl, FormMessage,
 } from "@/components/ui/form"
-
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -21,74 +16,125 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { toast } from "sonner"
 
 const formSchema = z.object({
-  fatherName: z.string().min(1, "Wajib diisi"),
-  motherName: z.string().min(1, "Wajib diisi"),
+  parentName: z.string(),
+  parentRelation: z.string(),
+  parentPhone: z.string().optional(),
   fullAddress: z.string(),
   postalCode: z.string(),
   childName: z.string().min(1, "Wajib diisi"),
   birthDate: z.date({ required_error: "Wajib diisi" }),
-  gender: z.enum(["male", "female"], { required_error: "Wajib dipilih" }),
+  gender: z.enum(["MALE", "FEMALE"], { required_error: "Wajib dipilih" }),
 })
 
+export interface FormTambahAnakProps {
+  onClose?: () => void
+}
 
-export function FormTambahAnak() {
+export function FormTambahAnak({ onClose }: FormTambahAnakProps) {
+  const [isParentExists, setIsParentExists] = useState(false)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fatherName: "",
-      motherName: "",
+      parentName: "",
+      parentRelation: "",
+      parentPhone: "",
       fullAddress: "",
       postalCode: "",
       childName: "",
       birthDate: new Date(),
       gender: undefined,
     },
+  })
 
+  const parentQuery = api.parent.getCurrentParent.useQuery()
+
+  useEffect(() => {
+    if (parentQuery.isSuccess && parentQuery.data.exists && parentQuery.data.parent) {
+      const res = parentQuery.data
+      setIsParentExists(true)
+      form.setValue("parentName", res.parent.name)
+      form.setValue("parentRelation", res.parent.relation)
+      form.setValue("parentPhone", res.parent.phone || "")
+      form.setValue("fullAddress", res.parent.address.full)
+      form.setValue("postalCode", res.parent.address.postalCode)
+    }
+  }, [parentQuery.isSuccess, parentQuery.data, form])
+
+  const createStudent = api.student.createStudent.useMutation({
+    onSuccess: () => {
+      toast.success("Siswa berhasil ditambahkan")
+      form.reset()
+      onClose?.()
+    },
+    onError: (err) => {
+      toast.error("Gagal menambahkan siswa: " + err.message)
+    },
   })
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data)
+    createStudent.mutate({
+      fullName: data.childName,
+      birthDate: data.birthDate,
+      gender: data.gender,
+      parentName: data.parentName,
+      parentRelation: data.parentRelation,
+      parentPhone: data.parentPhone,
+      fullAddress: data.fullAddress,
+      postalCode: data.postalCode,
+      latitude: -6.2, // dummy (nanti ganti pakai geocoding)
+      longitude: 106.8,
+    })
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
         {/* ORANG TUA */}
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">Data Orang Tua</h3>
 
           <FormField
             control={form.control}
-            name="fatherName"
+            name="parentName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Ayah</FormLabel>
+                <FormLabel>Nama Wali</FormLabel>
                 <FormControl>
-                  <Input placeholder="Misalnya: Budi Santoso" {...field} />
+                  <Input {...field} disabled={isParentExists} />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
 
           <FormField
             control={form.control}
-            name="motherName"
+            name="parentRelation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Ibu</FormLabel>
+                <FormLabel>Hubungan</FormLabel>
                 <FormControl>
-                  <Input placeholder="Misalnya: Siti Aminah" {...field} />
+                  <Input {...field} disabled={isParentExists} />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="parentPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>No. HP Wali</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={isParentExists} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -97,7 +143,7 @@ export function FormTambahAnak() {
               <FormItem>
                 <FormLabel>Alamat Lengkap</FormLabel>
                 <FormControl>
-                  <Input placeholder="Jl. Contoh No. 1, Kota, Provinsi" {...field} />
+                  <Input {...field} disabled={isParentExists} />
                 </FormControl>
               </FormItem>
             )}
@@ -110,7 +156,7 @@ export function FormTambahAnak() {
               <FormItem>
                 <FormLabel>Kode Pos</FormLabel>
                 <FormControl>
-                  <Input placeholder="12345" {...field} />
+                  <Input {...field} disabled={isParentExists} />
                 </FormControl>
               </FormItem>
             )}
@@ -126,9 +172,9 @@ export function FormTambahAnak() {
             name="childName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Lengkap Anak</FormLabel>
+                <FormLabel>Nama Anak</FormLabel>
                 <FormControl>
-                  <Input placeholder="Misalnya: Ali bin Budi" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -172,8 +218,8 @@ export function FormTambahAnak() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="male">Laki-laki</SelectItem>
-                    <SelectItem value="female">Perempuan</SelectItem>
+                    <SelectItem value="MALE">Laki-laki</SelectItem>
+                    <SelectItem value="FEMALE">Perempuan</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -183,7 +229,9 @@ export function FormTambahAnak() {
         </div>
 
         <div className="pt-2 text-right">
-          <Button type="submit">Simpan</Button>
+          <Button type="submit" disabled={createStudent.status === "pending"}>
+            {createStudent.status === "pending" ? "Menyimpan..." : "Simpan"}
+          </Button>
         </div>
       </form>
     </Form>
