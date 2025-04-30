@@ -114,7 +114,6 @@ model Student {
   id                 String    @id @default(uuid())
   name               String
   birthDate          DateTime
-  nik                String    @unique
   gender             Gender?
   photoUrl           String?
   isFinalized        Boolean   @default(false)
