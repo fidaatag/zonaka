@@ -23,6 +23,8 @@ export function TabsAcademic() {
   const sekolahList = academicData.find(j => j.jenjang === selectedJenjang)?.sekolah || [];
   const currentSekolah = sekolahList.find(s => s.nama === selectedSekolah);
 
+  const hasData = !!currentSemester;
+
   const findSemesterById = (id: string): Semester | null => {
     for (const j of academicData) {
       for (const s of j.sekolah) {
@@ -128,10 +130,14 @@ export function TabsAcademic() {
         <TabsContent key={j} value={j}>
           <Card className="p-4">
             <div className="flex justify-between items-center mb-2">
-              <h4 className="font-semibold text-lg">{selectedSekolah || "Pilih sekolah"}</h4>
+              {currentSekolah ? (
+                <h4 className="font-semibold text-lg">{selectedSekolah || "Pilih sekolah"}</h4>
+              ): (
+                <h4 className="font-semibold text-lg"></h4>
+              )}
               <div className="flex gap-2">
                 <Button onClick={handleAddNew}>Tambah Nilai</Button>
-                <Button variant="outline" onClick={handleEdit}>Edit Semester Ini</Button>
+                <Button variant="outline" onClick={handleEdit} disabled={!currentSekolah}>Edit Semester Ini</Button>
               </div>
             </div>
             {currentSekolah ? (
