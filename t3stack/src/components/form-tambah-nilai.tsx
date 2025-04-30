@@ -1,18 +1,31 @@
-// File: src/components/FormTambahNilai.tsx
-'use client'
+"use client";
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { Jenjang } from "@/types/academic";
+import type { Jenjang, FormSchemaType, Semester } from "@/types/academic";
 
+// Schema
 export const formSchema = z.object({
+  id: z.string().optional(), // ← ID untuk edit
   jenjang: z.enum(["sd", "smp", "sma"]),
   sekolah: z.string().min(1),
   kelas: z.string().min(1),
@@ -23,25 +36,39 @@ export const formSchema = z.object({
   bahasaInggris: z.coerce.number().min(0).max(100).optional(),
 });
 
-type FormSchemaType = z.infer<typeof formSchema>;
-
 interface FormTambahNilaiProps {
   onSubmit: (data: FormSchemaType & { total: number; average: string }) => void;
+  editData?: Semester | null;
 }
 
-export default function FormTambahNilai({ onSubmit }: FormTambahNilaiProps) {
+export default function FormTambahNilai({ onSubmit, editData }: FormTambahNilaiProps) {
+  const defaultValues: FormSchemaType = editData
+    ? {
+        id: editData.id,
+        jenjang: "sd", // ← optional: jika kamu bisa tracking asal jenjang, isi dari context
+        sekolah: "",   // ← optional: bisa kamu inject juga jika tracking sekolah aktif
+        kelas: String(editData.kelas),
+        semester: String(editData.semester) as "1" | "2",
+        bahasaIndonesia: editData.nilai.find(n => n.mapel === "Bahasa Indonesia")?.skor ?? 0,
+        matematika: editData.nilai.find(n => n.mapel === "Matematika")?.skor ?? 0,
+        ipa: editData.nilai.find(n => n.mapel === "IPA")?.skor ?? 0,
+        bahasaInggris: editData.nilai.find(n => n.mapel === "Bahasa Inggris")?.skor,
+      }
+    : {
+        id: undefined,
+        jenjang: "sd",
+        sekolah: "",
+        kelas: "",
+        semester: "1",
+        bahasaIndonesia: 0,
+        matematika: 0,
+        ipa: 0,
+        bahasaInggris: 0,
+      };
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      jenjang: "sd",
-      sekolah: "",
-      kelas: "",
-      semester: "1",
-      bahasaIndonesia: 0,
-      matematika: 0,
-      ipa: 0,
-      bahasaInggris: 0,
-    },
+    defaultValues,
   });
 
   const watchJenjang = form.watch("jenjang");
@@ -76,7 +103,6 @@ export default function FormTambahNilai({ onSubmit }: FormTambahNilaiProps) {
     <Card className="p-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-4">
-          {/* Jenjang */}
           <FormField control={form.control} name="jenjang" render={({ field }) => (
             <FormItem>
               <FormLabel>Jenjang</FormLabel>
@@ -151,7 +177,9 @@ export default function FormTambahNilai({ onSubmit }: FormTambahNilaiProps) {
             <Input readOnly value={total} />
             <Input readOnly value={average} />
           </div>
-          <Button type="submit" className="w-full">Submit</Button>
+          <Button type="submit" className="w-full">
+            {editData ? "Simpan Perubahan" : "Tambah Data"}
+          </Button>
         </form>
       </Form>
     </Card>
