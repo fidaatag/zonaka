@@ -8,7 +8,7 @@ export default function CardAcademic() {
       <Card className="p-5 w-full mx-auto mt-40">
         <h3 className="text-lg font-semibold">Data Akademik</h3>
 
-        <TabsAcademic data={dummyAcademicData} />
+        <TabsAcademic />
       </Card>
     </>
   )
