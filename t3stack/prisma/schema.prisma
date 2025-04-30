@@ -2,73 +2,285 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
+enum Role {
+  PARENT
+  SCHOOL
+  PARTNER
 }
 
-// Necessary for Next auth
-model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
-
-    @@unique([provider, providerAccountId])
+enum EducationLevel {
+  SD
+  SMP
+  SMA
 }
 
-model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum AchievementLevel {
+  SEKOLAH
+  KECAMATAN
+  KAB_KOTA
+  PROVINSI
+  NASIONAL
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  icpIdentity   String?
+
+  accounts Account[]
+  sessions Session[]
+
+  role    Role     @default(PARENT)
+  parent  Parent?
+  school  School?
+  partner Partner?
 }
 
-model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  refresh_token_expires_in Int?
 
-    @@unique([identifier, token])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  full       String
+  postalCode String
+  latitude   Float
+  longitude  Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parents  Parent[]
+  students Student[]
+  schools  School[]
+  partners Partner[]
+}
+
+model ParentStudent {
+  id        String @id @default(uuid())
+  parentId  String
+  studentId String
+  relation  String // e.g. Ayah, Ibu, Wali
+
+  parent  Parent  @relation(fields: [parentId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([parentId, studentId])
+}
+
+model Parent {
+  id          String          @id @default(uuid())
+  userId      String          @unique
+  user        User            @relation(fields: [userId], references: [id])
+  name        String
+  phoneNumber String
+  addressId   String
+  address     Address         @relation(fields: [addressId], references: [id])
+  relations   ParentStudent[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Student {
+  id                 String    @id @default(uuid())
+  name               String
+  birthDate          DateTime
+  nik                String    @unique
+  gender             Gender?
+  photoUrl           String?
+  isFinalized        Boolean   @default(false)
+  latestChainVersion Int       @default(0)
+  lastPushedAt       DateTime?
+
+  addressId String
+  address   Address @relation(fields: [addressId], references: [id])
+
+  relations ParentStudent[]
+
+  grades        Grade[]
+  schoolHistory SchoolHistory[]
+  achievements  Achievement[]
+  targetSchools TargetSchool[]
+  chainHistory  ChainPushHistory[]
+  pushQueue     PushQueue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model School {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id])
+  name           String
+  addressId      String
+  address        Address        @relation(fields: [addressId], references: [id])
+  description    String?
+  facilities     Json?
+  educationLevel EducationLevel
+
+  ppdbInfo     SchoolPPDBInfo[]
+  Grade        Grade[]
+  TargetSchool TargetSchool[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Partner {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  service     String
+  description String?
+  addressId   String
+  address     Address  @relation(fields: [addressId], references: [id])
+  contact     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Grade {
+  id        String  @id @default(uuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  year           Int
+  semester       Int
+  gradeLevel     Int // kelas 4, 5, 6, 7, ...
+  educationLevel EducationLevel
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+  subject  String
+  score    Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SchoolHistory {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id])
+  schoolName     String
+  educationLevel EducationLevel
+  entryYear      Int
+  graduationYear Int?
+  isCurrent      Boolean        @default(false)
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Achievement {
+  id        String           @id @default(uuid())
+  studentId String
+  student   Student          @relation(fields: [studentId], references: [id])
+  name      String
+  year      Int
+  level     AchievementLevel
+  type      String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model TargetSchool {
+  id        String  @id @default(uuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  schoolId       String
+  school         School         @relation(fields: [schoolId], references: [id])
+  educationLevel EducationLevel
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@unique([studentId, educationLevel, schoolId])
+}
+
+model SchoolPPDBInfo {
+  id                       String         @id @default(uuid())
+  educationLevel           EducationLevel
+  schoolId                 String
+  school                   School         @relation(fields: [schoolId], references: [id])
+  academicYear             String
+  capacityZonasi           Int
+  avgApplicantsZonasi      Int
+  capacityPrestasi         Int
+  avgApplicantsPrestasi    Int
+  capacityAfirmasi         Int
+  avgApplicantsAfirmasi    Int
+  capacityPerpindahanOrtu  Int
+  avgApplicantsPerpindahan Int
+  zoningRadiusKm           Float
+  minAvgScorePrestasi      Float
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+}
+
+model ChainPushHistory {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  version     Int
+  pushedAt    DateTime @default(now())
+  snapshot    Json
+  notes       String?
+  chainTxId   String?
+  explorerUrl String?
+  createdAt   DateTime @default(now())
+}
+
+model PushQueue {
+  id          String    @id @default(uuid())
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id])
+  version     Int
+  payload     Json
+  ready       Boolean   @default(false)
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
 }
