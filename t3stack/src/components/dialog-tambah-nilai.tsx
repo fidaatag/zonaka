@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { FormTambahAnak } from "./form-tambah-anak";
+import { FormTambahNilai } from "./form-tambah-nilai"
 
 export function DialogTambahNilai() {
   return (
@@ -34,7 +34,7 @@ export function DialogTambahNilai() {
 
         </DialogHeader>
 
-        <FormTambahAnak />
+        <FormTambahNilai />
       </DialogContent>
     </Dialog>
   )
