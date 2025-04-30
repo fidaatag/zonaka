@@ -34,7 +34,7 @@ export function TabsAcademic() {
   };
 
   const handleAddAcademicData = (
-    data: FormSchemaType & { total: number; average: string }
+    data: FormSchemaType & { total: number; average: number }
   ) => {
     const newSemester: Semester = {
       id: data.id ?? uuidv4(),
@@ -148,6 +148,8 @@ export function TabsAcademic() {
         editData={editingId ? findSemesterById(editingId) : null}
         open={isDialogOpen}
         setOpen={setDialogOpen}
+        sekolahAktif={selectedSekolah}
+        jenjangAktif={selectedJenjang}
       />
     </Tabs>
   );

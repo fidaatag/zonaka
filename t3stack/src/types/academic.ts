@@ -10,7 +10,7 @@ export interface Semester {
   semester: 1 | 2;
   nilai: Score[];
   total: number;
-  rataRata: string;
+  rataRata: number;
 }
 
 export interface School {

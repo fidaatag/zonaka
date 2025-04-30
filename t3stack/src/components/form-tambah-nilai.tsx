@@ -37,16 +37,23 @@ export const formSchema = z.object({
 });
 
 interface FormTambahNilaiProps {
-  onSubmit: (data: FormSchemaType & { total: number; average: string }) => void;
+  onSubmit: (data: FormSchemaType & { total: number; average: number }) => void;
   editData?: Semester | null;
+  sekolahAktif?: string;
+  jenjangAktif?: Jenjang;
 }
 
-export default function FormTambahNilai({ onSubmit, editData }: FormTambahNilaiProps) {
+export default function FormTambahNilai({
+  onSubmit,
+  editData,
+  sekolahAktif,
+  jenjangAktif,
+}: FormTambahNilaiProps) {
   const defaultValues: FormSchemaType = editData
     ? {
         id: editData.id,
-        jenjang: "sd", // ← optional: jika kamu bisa tracking asal jenjang, isi dari context
-        sekolah: "",   // ← optional: bisa kamu inject juga jika tracking sekolah aktif
+        jenjang: jenjangAktif ?? "sd",
+        sekolah: sekolahAktif ?? "",
         kelas: String(editData.kelas),
         semester: String(editData.semester) as "1" | "2",
         bahasaIndonesia: editData.nilai.find(n => n.mapel === "Bahasa Indonesia")?.skor ?? 0,
@@ -83,7 +90,7 @@ export default function FormTambahNilai({ onSubmit, editData }: FormTambahNilaiP
   if (!isSD) nilaiList.push(Number(watchValues.bahasaInggris));
 
   const total = nilaiList.reduce((a, b) => a + b, 0);
-  const average = (total / nilaiList.length).toFixed(2);
+  const average = Number((total / nilaiList.length).toFixed(2));
 
   useEffect(() => {
     if (isSD) form.setValue("bahasaInggris", 0);
