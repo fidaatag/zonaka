@@ -1,51 +1,26 @@
 'use client'
 
-import { CardStudent, type StudentProps, } from "@/components/card-student"
+import { api } from "@/trpc/react"
+import { CardStudent, type StudentProps } from "@/components/card-student"
 import Link from "next/link";
 
 export default function PageStudent() {
-  const dummyStudents: StudentProps[] = [
-    {
-      name: "Aisyah Putri",
-      birthDate: "2015-05-12",
-      educationLevel: "SD",
-      status: "Aktif",
-      imageUrl: "https://avatar.iran.liara.run/public/20",
-      school: {
-        name: "SD Negeri 1 Harapan Bangsa",
-      },
-    },
-    {
-      name: "Fajar Ramadhan",
-      birthDate: "2011-09-08",
-      educationLevel: "SMP",
-      status: "Aktif",
-      imageUrl: "https://avatar.iran.liara.run/public/20",
-      school: {
-        name: "SMP Islam Terpadu Cahaya",
-      },
-    },
-    {
-      name: "Indah Permata",
-      birthDate: "2007-03-20",
-      educationLevel: "SMA",
-      status: "Lulus",
-      imageUrl: "https://avatar.iran.liara.run/public/20",
-      school: {
-        name: "SMA Negeri 3 Nusantara",
-      },
-    },
-    {
-      name: "Sekar Ayu Perdana Honda",
-      birthDate: "2007-03-20",
-      educationLevel: "SMP",
-      status: "Lulus",
-      imageUrl: "https://avatar.iran.liara.run/public/20",
-      school: {
-        name: "SMA Negeri 3 Nusantara",
-      },
-    },
-  ];
+  const { data, isLoading } = api.student.getAllStudentByParent.useQuery();
+
+  console.log("DATA STUDENT", data);
+
+  if (isLoading) {
+    return <p className="p-4">Loading...</p>;
+  }
+
+  const students: StudentProps[] = (data?.students ?? []).map(student => ({
+    ...student,
+    status: student.status as "Aktif" | "Lulus",
+    birthDate: student.birthDate ?? "",
+    educationLevel: ["SD", "SMP", "SMA", "-"].includes(student.educationLevel)
+      ? (student.educationLevel as "SD" | "SMP" | "SMA" | "-")
+      : "-",
+  }));
 
   return (
     <div className="p-4 space-y-4">
@@ -57,15 +32,12 @@ export default function PageStudent() {
       </div>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {dummyStudents.map((student, index) => (
-          <Link
-            href={`/board/student/123`}
-            key={index}
-          >
-            <CardStudent key={index} student={student} />
+        {students.map((student, index) => (
+          <Link href={`/board/student/${student.name}`} key={index}>
+            <CardStudent student={student} />
           </Link>
         ))}
       </section>
     </div>
-  )
+  );
 }

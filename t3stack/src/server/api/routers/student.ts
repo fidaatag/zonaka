@@ -1,4 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { add } from "date-fns";
 import { z } from "zod";
 
 export const studentRouter = createTRPCRouter({
@@ -19,7 +20,7 @@ export const studentRouter = createTRPCRouter({
         postalCode: z.string(),
         latitude: z.number(),
         longitude: z.number(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
@@ -95,6 +96,74 @@ export const studentRouter = createTRPCRouter({
           error: error instanceof Error ? error.message : "Unknown error",
         }
       }
-    })
+    }),
 
+
+  // get all students by user as parent
+  getAllStudentByParent: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const userId = ctx.session.user.id;
+
+        // check is parent has students
+        const parent = await ctx.db.parent.findUnique({
+          where: { userId: userId },
+          include: { students: true }
+        })
+
+        if (!parent) {
+          return {
+            success: true,
+            message: "Tidak ada siswa yang terdaftar",
+            students: [],
+          }
+        }
+
+        // get all students by parent
+        const students = await ctx.db.student.findMany({
+          where: { parentId: parent.id },
+          include: {
+            schoolHistory: {
+              where: { isCurrent: true },
+              include: {
+                school: {
+                  include: {
+                    address: true,
+                  },
+                },
+              },
+            },
+          }          
+        });
+
+        const studentList = students.map((student) => {
+          const currentSchool = student.schoolHistory[0];
+
+          return {
+            name: student.name,
+            birthDate: student.birthDate.toISOString().split("T")[0], // format ke 'YYYY-MM-DD'
+            educationLevel: currentSchool?.educationLevel ?? "-",
+            school: {
+              name: currentSchool?.school?.name ?? currentSchool?.schoolName ?? "-",
+              address: currentSchool?.school?.address?.full ?? "-",
+            },
+            status: currentSchool?.isCurrent ? "Aktif" : "Lulus", // atau logic lain
+            imageUrl: student.photoUrl ?? "https://avatar.iran.liara.run/public/20",
+          }
+        });
+
+        return {
+          success: true,
+          message: "Data siswa ditemukan",
+          students: studentList,
+        }
+
+      } catch (error) {
+        return {
+          success: false,
+          message: "Gagal mengambil data siswa",
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    })
 })
