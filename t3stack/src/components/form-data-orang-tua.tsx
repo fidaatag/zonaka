@@ -1,19 +1,21 @@
-'use client'
+"use client"
 
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card } from "./ui/card"
+import { api } from "@/trpc/react"
 
 const formSchema = z.object({
-  ayah: z.string().min(1, { message: "Nama Ayah wajib diisi" }),
-  ibu: z.string().min(1, { message: "Nama Ibu wajib diisi" }),
-  alamat: z.string().min(1, { message: "Alamat wajib diisi" }),
-  kodePos: z.string().min(4, { message: "Kode Pos minimal 4 angka" }),
+  parentName: z.string({ required_error: "Nama Wali wajib diisi" }),
+  parentRelation: z.string({ required_error: "Hubungan wajib diisi" }),
+  parentPhone: z.string().optional(),
+  fullAddress: z.string({ required_error: "Alamat wajib diisi" }),
+  postalCode: z.string({ required_error: "Kode Pos wajib diisi" }),
 })
 
 export default function FormDataOrangTua() {
@@ -23,22 +25,41 @@ export default function FormDataOrangTua() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ayah: "",
-      ibu: "",
-      alamat: "",
-      kodePos: "",
+      parentName: "",
+      parentRelation: "",
+      parentPhone: "",
+      fullAddress: "",
+      postalCode: "",
     },
   })
+
+  const { data: parentData } = api.parent.getCurrentParent.useQuery()
+  const updateParent = api.parent.updateCurrentParent.useMutation()
+
+  useEffect(() => {
+    if (parentData) {
+      form.reset({
+        parentName: parentData.parent?.name ?? "",
+        parentRelation: parentData.parent?.relation ?? "",
+        parentPhone: parentData.parent?.phone ?? "",
+        fullAddress: parentData.parent?.address.full ?? "",
+        postalCode: parentData.parent?.address.postalCode ?? "",
+      })
+    }
+  }, [parentData])
 
   const handleEdit = () => {
     setIsEditing(true)
     setTimeout(() => firstInputRef.current?.focus(), 0)
   }
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setIsEditing(false)
-    console.log("Data disimpan:", data)
-    // TODO: simpan ke backend atau state global
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      await updateParent.mutateAsync(data)
+      setIsEditing(false)
+    } catch (err) {
+      console.error("Gagal update data:", err)
+    }
   }
 
   return (
@@ -49,10 +70,10 @@ export default function FormDataOrangTua() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="ayah"
+            name="parentName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Ayah</FormLabel>
+                <FormLabel>Nama Wali</FormLabel>
                 <FormControl>
                   <Input {...field} readOnly={!isEditing} ref={firstInputRef} />
                 </FormControl>
@@ -63,10 +84,10 @@ export default function FormDataOrangTua() {
 
           <FormField
             control={form.control}
-            name="ibu"
+            name="parentRelation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Ibu</FormLabel>
+                <FormLabel>Hubungan</FormLabel>
                 <FormControl>
                   <Input {...field} readOnly={!isEditing} />
                 </FormControl>
@@ -77,7 +98,21 @@ export default function FormDataOrangTua() {
 
           <FormField
             control={form.control}
-            name="alamat"
+            name="parentPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>No. HP Wali</FormLabel>
+                <FormControl>
+                  <Input {...field} readOnly={!isEditing} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="fullAddress"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Alamat Lengkap</FormLabel>
@@ -91,7 +126,7 @@ export default function FormDataOrangTua() {
 
           <FormField
             control={form.control}
-            name="kodePos"
+            name="postalCode"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Kode Pos</FormLabel>
@@ -104,12 +139,7 @@ export default function FormDataOrangTua() {
           />
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleEdit}
-              disabled={isEditing}
-            >
+            <Button type="button" variant="outline" onClick={handleEdit} disabled={isEditing}>
               Edit
             </Button>
             <Button type="submit" disabled={!isEditing}>

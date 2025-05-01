@@ -96,36 +96,24 @@ model Address {
   partners Partner[]
 }
 
-model ParentStudent {
-  id        String @id @default(uuid())
-  parentId  String
-  studentId String
-  relation  String // e.g. Ayah, Ibu, Wali
-
-  parent  Parent  @relation(fields: [parentId], references: [id])
-  student Student @relation(fields: [studentId], references: [id])
-
-  @@unique([parentId, studentId])
-}
-
 model Parent {
-  id          String          @id @default(uuid())
-  userId      String          @unique
-  user        User            @relation(fields: [userId], references: [id])
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
   name        String
   phoneNumber String
   addressId   String
-  address     Address         @relation(fields: [addressId], references: [id])
-  relations   ParentStudent[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  address     Address   @relation(fields: [addressId], references: [id])
+  relations   String // Ayah, Ibu, Wali
+  students    Student[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Student {
   id                 String    @id @default(uuid())
   name               String
   birthDate          DateTime
-  nik                String    @unique
   gender             Gender?
   photoUrl           String?
   isFinalized        Boolean   @default(false)
@@ -135,7 +123,8 @@ model Student {
   addressId String
   address   Address @relation(fields: [addressId], references: [id])
 
-  relations ParentStudent[]
+  parentId String?
+  parent   Parent? @relation(fields: [parentId], references: [id])
 
   grades        Grade[]
   schoolHistory SchoolHistory[]
@@ -159,9 +148,10 @@ model School {
   facilities     Json?
   educationLevel EducationLevel
 
-  ppdbInfo     SchoolPPDBInfo[]
-  Grade        Grade[]
-  TargetSchool TargetSchool[]
+  ppdbInfo      SchoolPPDBInfo[]
+  Grade         Grade[]
+  TargetSchool  TargetSchool[]
+  SchoolHistory SchoolHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -201,9 +191,13 @@ model Grade {
 }
 
 model SchoolHistory {
-  id             String         @id @default(uuid())
-  studentId      String
-  student        Student        @relation(fields: [studentId], references: [id])
+  id        String  @id @default(uuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  schoolId String?
+  school   School? @relation(fields: [schoolId], references: [id])
+
   schoolName     String
   educationLevel EducationLevel
   entryYear      Int

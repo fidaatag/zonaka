@@ -7,9 +7,10 @@ import { differenceInYears } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
 export interface StudentProps {
+  id: string
   name: string
   birthDate: string
-  educationLevel: 'SD' | 'SMP' | 'SMA'
+  educationLevel: '-' | 'SD' | 'SMP' | 'SMA'
   school: {
     name: string
     address?: string
@@ -26,6 +27,7 @@ const colorMap = {
   SD: "bg-red-800",
   SMP: "bg-blue-800",
   SMA: "bg-gray-700",
+  "-": "bg-gray-400",
 }
 
 export function CardStudent({ student }: StudentCardProps) {

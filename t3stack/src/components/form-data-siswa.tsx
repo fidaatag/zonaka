@@ -1,59 +1,76 @@
 'use client'
 
 import { useForm } from "react-hook-form"
+import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form"
-
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, intervalToDuration, isValid } from "date-fns"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card } from "./ui/card"
+import { format, intervalToDuration, isValid, parseISO } from "date-fns"
+import { CalendarIcon } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { useParams } from "next/navigation"
+import { api } from "@/trpc/react"
 
 const formSchema = z.object({
-  childName: z.string().min(1, "Wajib diisi"),
+  name: z.string().min(1, "Wajib diisi"),
   birthDate: z.date({ required_error: "Wajib diisi" }),
-  gender: z.enum(["male", "female"], { required_error: "Wajib dipilih" }),
+  gender: z.enum(["MALE", "FEMALE"], { required_error: "Wajib dipilih" }),
 })
 
 export default function FormDataSiswa() {
   const [isEditing, setIsEditing] = useState(false)
   const firstInputRef = useRef<HTMLInputElement>(null)
   const [ageDescription, setAgeDescription] = useState("")
+  const params = useParams()
+  const studentId = params?.id as string
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      childName: "",
+      name: "",
       birthDate: undefined,
       gender: undefined,
     },
   })
+
+  const { data: studentData } = api.student.getStudentCardById.useQuery({ id: studentId })
+  const updateStudent = api.student.updateStudentCardById.useMutation()
+
+  useEffect(() => {
+    if (studentData) {
+      form.reset({
+        name: studentData.name ?? "",
+        birthDate: new Date(studentData.birthDate),
+        gender: studentData.gender ?? undefined,
+      })
+    }
+  }, [studentData])
 
   const watchBirthDate = form.watch("birthDate")
 
   useEffect(() => {
     if (watchBirthDate && isValid(watchBirthDate)) {
       const duration = intervalToDuration({
-        start: new Date(watchBirthDate),
+        start: watchBirthDate,
         end: new Date(),
       })
-
-      const { years, months, days } = duration
+      const { years = 0, months = 0, days = 0 } = duration
       setAgeDescription(`${years} tahun ${months} bulan ${days} hari`)
     } else {
       setAgeDescription("")
@@ -65,9 +82,13 @@ export default function FormDataSiswa() {
     setTimeout(() => firstInputRef.current?.focus(), 0)
   }
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setIsEditing(false)
-    console.log("Data Anak:", { ...data, usia: ageDescription })
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      await updateStudent.mutateAsync({ id: studentId, ...data })
+      setIsEditing(false)
+    } catch (err) {
+      console.error("Gagal update data siswa:", err)
+    }
   }
 
   return (
@@ -78,13 +99,14 @@ export default function FormDataSiswa() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="childName"
+            name="name"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nama Lengkap Anak</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
+                    readOnly={!isEditing}
                     ref={(el) => {
                       field.ref(el)
                       firstInputRef.current = el
@@ -97,7 +119,6 @@ export default function FormDataSiswa() {
             )}
           />
 
-
           <FormField
             control={form.control}
             name="birthDate"
@@ -109,6 +130,7 @@ export default function FormDataSiswa() {
                     <FormControl>
                       <Button
                         variant="outline"
+                        disabled={!isEditing}
                         className={cn(
                           "w-full justify-start text-left font-normal",
                           !field.value && "text-muted-foreground"
@@ -151,15 +173,19 @@ export default function FormDataSiswa() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Jenis Kelamin</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  disabled={!isEditing}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih jenis kelamin" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="male">Laki-laki</SelectItem>
-                    <SelectItem value="female">Perempuan</SelectItem>
+                    <SelectItem value="MALE">Laki-laki</SelectItem>
+                    <SelectItem value="FEMALE">Perempuan</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -168,12 +194,7 @@ export default function FormDataSiswa() {
           />
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleEdit}
-              disabled={isEditing}
-            >
+            <Button type="button" variant="outline" onClick={handleEdit} disabled={isEditing}>
               Edit
             </Button>
             <Button type="submit" disabled={!isEditing}>

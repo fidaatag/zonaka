@@ -10,10 +10,13 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { FormTambahAnak } from "./form-tambah-anak";
+import { useState } from "react"
 
 export function DialogTamabahAnak() {
+  const [open, setOpen] = useState(false)
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="self-start md:self-auto">
           Tambah Anak
@@ -28,13 +31,12 @@ export function DialogTamabahAnak() {
         <DialogHeader>
           <DialogTitle>Tambah Anak</DialogTitle>
           <DialogDescription>
-            Silakan isi informasi dasar orang tua dan anak. 
+            Silakan isi informasi dasar orang tua dan anak.
             Data ini akan digunakan untuk membuat profil anak dalam sistem Zonaka.
           </DialogDescription>
-
         </DialogHeader>
 
-        <FormTambahAnak />
+        <FormTambahAnak onClose={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   )
