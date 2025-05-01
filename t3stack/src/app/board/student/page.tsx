@@ -33,7 +33,7 @@ export default function PageStudent() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {students.map((student, index) => (
-          <Link href={`/board/student/${student.name}`} key={index}>
+          <Link href={`/board/student/${student.id}`} key={index + student.id} className="w-full">
             <CardStudent student={student} />
           </Link>
         ))}

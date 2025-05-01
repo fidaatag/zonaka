@@ -7,6 +7,7 @@ import { differenceInYears } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
 export interface StudentProps {
+  id: string
   name: string
   birthDate: string
   educationLevel: '-' | 'SD' | 'SMP' | 'SMA'

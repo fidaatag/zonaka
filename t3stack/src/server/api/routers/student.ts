@@ -140,6 +140,7 @@ export const studentRouter = createTRPCRouter({
           const currentSchool = student.schoolHistory[0];
 
           return {
+            id: student.id,
             name: student.name,
             birthDate: student.birthDate.toISOString().split("T")[0], // format ke 'YYYY-MM-DD'
             educationLevel: currentSchool?.educationLevel ?? "-",
