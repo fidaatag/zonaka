@@ -133,7 +133,7 @@ export const studentRouter = createTRPCRouter({
                 },
               },
             },
-          }          
+          }
         });
 
         const studentList = students.map((student) => {
@@ -166,5 +166,43 @@ export const studentRouter = createTRPCRouter({
           error: error instanceof Error ? error.message : "Unknown error",
         };
       }
-    })
+    }),
+
+
+  // get student for card by id
+  getStudentCardById: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.student.findUnique({
+        where: { id: input.id },
+        select: {
+          name: true,
+          birthDate: true,
+          gender: true,
+        },
+      })
+    }),
+
+
+  // update student for card by id
+  updateStudentCardById: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1, "Wajib diisi"),
+        birthDate: z.date({ required_error: "Wajib diisi" }),
+        gender: z.enum(["MALE", "FEMALE"], { required_error: "Wajib dipilih" }),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input
+      return await ctx.db.student.update({
+        where: { id },
+        data,
+      })
+    }),
 })
