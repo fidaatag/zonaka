@@ -9,7 +9,7 @@ export const parentRouter = createTRPCRouter({
 
       const parent = await ctx.db.parent.findUnique({
         where: { userId },
-        include: { address: true},
+        include: { address: true },
       });
 
       if (!parent) {
@@ -45,7 +45,52 @@ export const parentRouter = createTRPCRouter({
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  })
+  }),
+
+  
+
+  updateCurrentParent: protectedProcedure
+    .input(
+      z.object({
+        parentName: z.string(),
+        parentRelation: z.string(),
+        parentPhone: z.string().optional(),
+        fullAddress: z.string(),
+        postalCode: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const userId = ctx.session.user.id;
+
+        const updatedParent = await ctx.db.parent.update({
+          where: { userId },
+          data: {
+            name: input.parentName,
+            relations: input.parentRelation,
+            phoneNumber: input.parentPhone,
+            address: {
+              update: {
+                full: input.fullAddress,
+                postalCode: input.postalCode,
+              },
+            },
+          },
+        });
+
+        return {
+          success: true,
+          message: "Data orang tua berhasil diperbarui",
+          parent: updatedParent,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: "Gagal memperbarui data orang tua",
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    })
 
 
 })
