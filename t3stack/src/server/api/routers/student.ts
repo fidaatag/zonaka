@@ -205,4 +205,120 @@ export const studentRouter = createTRPCRouter({
         data,
       })
     }),
+
+
+  // get school history by StudentId
+  getSchoolHistoryByStudentId: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.schoolHistory.findMany({
+        where: { studentId: input.id },
+        select: {
+          id: true,
+          schoolId: true,
+          school: true,
+          schoolName: true,
+          educationLevel: true,
+          entryYear: true,
+          graduationYear: true,
+          isCurrent: true,
+          notes: true
+        }
+      })
+    }),
+
+
+  // create school history by StudentId
+  createSchoolHistoryByStudentId: protectedProcedure
+    .input(
+      z.object({
+        studentId: z.string(),
+        schoolId: z.string(),
+        schoolName: z.string(),
+        educationLevel: z.enum(["SD", "SMP", "SMA"]),
+        entryYear: z.number(),
+        graduationYear: z.number().optional(),
+        isCurrent: z.string(),
+        notes: z.string().optional()
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.db.schoolHistory.create({
+          data: {
+            studentId: input.studentId,
+            schoolId: input.schoolId,
+            schoolName: input.schoolName,
+            educationLevel: input.educationLevel,
+            entryYear: input.entryYear,
+            graduationYear: input.graduationYear ?? 0,
+            isCurrent: input.isCurrent === "true",
+            notes: input.notes ?? "",
+          }
+        })
+
+        return {
+          success: true,
+          message: "Sekolah siswa berhasil ditambahkan",
+        }
+
+      } catch (error) {
+        return {
+          success: false,
+          message: "Gagal menambahkan sekolah siswa",
+          error: error instanceof Error ? error.message : "Unknown error",
+        }
+      }
+    }),
+
+  // update school history by StudentId
+  updateSchoolHistoryByStudentId: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        studentId: z.string(),
+        schoolId: z.string(),
+        schoolName: z.string(),
+        educationLevel: z.enum(["SD", "SMP", "SMA"]),
+        entryYear: z.number(),
+        graduationYear: z.number().optional(),
+        isCurrent: z.string(),
+        notes: z.string().optional()
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.db.schoolHistory.update({
+          where: { id: input.id },
+          data: {
+            studentId: input.studentId,
+            schoolId: input.schoolId,
+            schoolName: input.schoolName,
+            educationLevel: input.educationLevel,
+            entryYear: input.entryYear,
+            graduationYear: input.graduationYear ?? 0,
+            isCurrent: input.isCurrent === "true",
+            notes: input.notes ?? "",
+          }
+        })
+
+        return {
+          success: true,
+          message: "Sekolah siswa berhasil diupdate",
+        }
+
+      } catch (error) {
+        return {
+          success: false,
+          message: "Gagal menambahkan sekolah siswa",
+          error: error instanceof Error ? error.message : "Unknown error",
+        }
+      }
+    })
+
+
 })
