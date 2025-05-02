@@ -23,7 +23,7 @@ export function TabsAcademic() {
   const params = useParams();
   const studentId = params.id as string;
 
-  const { data, isLoading } = api.student.getGradesByStudentId.useQuery({ studentId });
+  const { data, isLoading, refetch } = api.student.getGradesByStudentId.useQuery({ studentId });
 
   useEffect(() => {
     if (!data) return;
@@ -142,6 +142,7 @@ export function TabsAcademic() {
 
       <DialogTambahNilai
         onSubmit={() => {}}
+        onSuccess={refetch}
         editData={editingId ? findSemesterById(editingId) : null}
         open={isDialogOpen}
         setOpen={setDialogOpen}

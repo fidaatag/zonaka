@@ -40,6 +40,7 @@ const formSchema = z.object({
 
 interface FormTambahNilaiProps {
   onSubmit: (data: FormSchemaType & { total: number; average: number }) => void;
+  onSuccess?: () => void;
   editData?: Semester | null;
   sekolahAktif?: string;
   jenjangAktif?: Jenjang;
@@ -47,6 +48,7 @@ interface FormTambahNilaiProps {
 
 export default function FormTambahNilai({
   onSubmit,
+  onSuccess,
   editData,
   sekolahAktif,
   jenjangAktif,
@@ -91,6 +93,7 @@ export default function FormTambahNilai({
 
   const createGrade = api.student.createGradesPerSemesterByStudentId.useMutation({
     onSuccess: () => {
+      onSuccess?.();
       toast.success("Nilai siswa berhasil ditambahkan");
       form.reset();
     },
@@ -101,6 +104,7 @@ export default function FormTambahNilai({
 
   const updateGrade = api.student.updateGradesByGroupId.useMutation({
     onSuccess: () => {
+      onSuccess?.();
       toast.success("Nilai siswa berhasil diperbarui");
       form.reset();
     },

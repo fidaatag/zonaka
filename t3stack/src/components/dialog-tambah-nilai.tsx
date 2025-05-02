@@ -12,6 +12,7 @@ import type { Semester, Jenjang, FormSchemaType } from "@/types/academic";
 
 interface DialogTambahNilaiProps {
   onSubmit: (data: FormSchemaType & { total: number; average: number }) => void;
+  onSuccess?: () => void; // ✅ tambahan
   editData?: Semester | null;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -21,6 +22,7 @@ interface DialogTambahNilaiProps {
 
 export default function DialogTambahNilai({
   onSubmit,
+  onSuccess,
   editData,
   open,
   setOpen,
@@ -40,6 +42,7 @@ export default function DialogTambahNilai({
             onSubmit(data);
             setOpen(false);
           }}
+          onSuccess={onSuccess} 
           editData={editData}
           sekolahAktif={sekolahAktif}
           jenjangAktif={jenjangAktif}
