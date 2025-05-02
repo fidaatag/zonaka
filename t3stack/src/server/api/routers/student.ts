@@ -1,4 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import type { Jenjang, JenjangData } from "@/types/academic";
 import { add } from "date-fns";
 import { z } from "zod";
 
@@ -379,6 +380,84 @@ export const studentRouter = createTRPCRouter({
         };
       }
     }),
+
+
+  // get grades by student
+  getGradesByStudentId: protectedProcedure
+    .input(z.object({ studentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const grades = await ctx.db.grade.findMany({
+        where: { studentId: input.studentId },
+        include: { school: true },
+        orderBy: [
+          { educationLevel: "asc" },
+          { gradeLevel: "asc" },
+          { semester: "asc" },
+          { subject: "asc" },
+        ],
+      });
+
+      type GradeGroup = {
+        groupId: string;
+        schoolId: string;
+        schoolName: string
+        gradeLevel: number;
+        semester: number;
+        year: number;
+        subjects: {
+          gradeId: string;
+          subject: string;
+          score: number;
+        }[];
+      };
+
+      const groupedByEduLevel: {
+        educationLevel: "SD" | "SMP" | "SMA";
+        data: GradeGroup[];
+      }[] = [];
+
+      const levelMap = new Map<"SD" | "SMP" | "SMA", Map<string, GradeGroup>>();
+
+      for (const grade of grades) {
+        const level = grade.educationLevel as "SD" | "SMP" | "SMA";
+        const groupKey = `${grade.schoolId}-${grade.gradeLevel}-${grade.semester}`;
+
+        if (!levelMap.has(level)) {
+          levelMap.set(level, new Map());
+        }
+
+        const groupMap = levelMap.get(level)!;
+
+        if (!groupMap.has(groupKey)) {
+          groupMap.set(groupKey, {
+            groupId: grade.id, // ambil ID pertama yang ditemukan
+            schoolId: grade.schoolId,
+            schoolName: grade.school.name,
+            gradeLevel: grade.gradeLevel,
+            semester: grade.semester,
+            year: grade.year,
+            subjects: [],
+          });
+        }
+
+        const group = groupMap.get(groupKey)!;
+        group.subjects.push({
+          gradeId: grade.id,
+          subject: grade.subject,
+          score: grade.score,
+        });
+      }
+
+      for (const [level, groupMap] of levelMap.entries()) {
+        groupedByEduLevel.push({
+          educationLevel: level,
+          data: Array.from(groupMap.values()),
+        });
+      }
+
+      return { grades: groupedByEduLevel };
+    }),
+
 
 
 
