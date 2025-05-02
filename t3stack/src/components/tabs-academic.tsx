@@ -13,8 +13,8 @@ import { v4 as uuidv4 } from "uuid";
 
 export function TabsAcademic() {
   const [academicData, setAcademicData] = useState<JenjangData[]>([]);
-  const jenjangList: Jenjang[] = ["sd", "smp", "sma"];
-  const [selectedJenjang, setJenjang] = useState<Jenjang>("sd");
+  const jenjangList: Jenjang[] = ["SD", "SMP", "SMA"];
+  const [selectedJenjang, setJenjang] = useState<Jenjang>("SD");
   const [selectedSekolah, setSekolah] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -46,7 +46,7 @@ export function TabsAcademic() {
         { id: uuidv4(), mapel: "Bahasa Indonesia", skor: data.bahasaIndonesia },
         { id: uuidv4(), mapel: "Matematika", skor: data.matematika },
         { id: uuidv4(), mapel: "IPA", skor: data.ipa },
-        ...(data.jenjang !== "sd"
+        ...(data.jenjang !== "SD"
           ? [{ id: uuidv4(), mapel: "Bahasa Inggris", skor: data.bahasaInggris ?? 0 }]
           : []),
       ],
@@ -123,7 +123,7 @@ export function TabsAcademic() {
         <TabsList className="w-fit">
           {jenjangList.map(j => <TabsTrigger key={j} value={j}>{j.toUpperCase()}</TabsTrigger>)}
         </TabsList>
-        <SelectSchool schools={sekolahList.map(s => s.nama)} selected={selectedSekolah} onChange={setSekolah} />
+        <SelectSchool jenjangtype={selectedJenjang} selected={selectedSekolah} onChange={setSekolah} />
       </div>
 
       {jenjangList.map(j => (

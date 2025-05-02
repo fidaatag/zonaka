@@ -22,11 +22,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Jenjang, FormSchemaType, Semester } from "@/types/academic";
+import { api } from "@/trpc/react";
 
 // Schema
 export const formSchema = z.object({
   id: z.string().optional(), // ← ID untuk edit
-  jenjang: z.enum(["sd", "smp", "sma"]),
+  jenjang: z.enum(["SD", "SMP", "SMA"]),
   sekolah: z.string().min(1),
   kelas: z.string().min(1),
   semester: z.enum(["1", "2"]),
@@ -52,7 +53,7 @@ export default function FormTambahNilai({
   const defaultValues: FormSchemaType = editData
     ? {
       id: editData.id,
-      jenjang: jenjangAktif ?? "sd",
+      jenjang: jenjangAktif ?? "SD",
       sekolah: sekolahAktif ?? "",
       kelas: String(editData.kelas),
       semester: String(editData.semester) as "1" | "2",
@@ -63,7 +64,7 @@ export default function FormTambahNilai({
     }
     : {
       id: undefined,
-      jenjang: "sd",
+      jenjang: "SD",
       sekolah: "",
       kelas: "",
       semester: "1",
@@ -79,7 +80,7 @@ export default function FormTambahNilai({
   });
 
   const watchJenjang = form.watch("jenjang");
-  const isSD = watchJenjang === "sd";
+  const isSD = watchJenjang === "SD";
   const watchValues = form.watch();
 
   const nilaiList = [
@@ -97,9 +98,9 @@ export default function FormTambahNilai({
   }, [isSD, form]);
 
   const kelasMap = {
-    sd: ["4", "5", "6"],
-    smp: ["7", "8", "9"],
-    sma: ["10", "11", "12"],
+    SD: ["4", "5", "6"],
+    SMP: ["7", "8", "9"],
+    SMA: ["10", "11", "12"],
   };
 
   useEffect(() => {
@@ -111,8 +112,37 @@ export default function FormTambahNilai({
   }, [watchJenjang]);
 
 
+
+  const createGrade = api.student.createGradesPerSemesterByStudentId.useMutation();
+
+
   const handleSubmitForm = (data: FormSchemaType) => {
-    onSubmit({ ...data, total, average });
+    const {
+      jenjang,
+      sekolah,
+      kelas,
+      semester,
+      bahasaIndonesia,
+      matematika,
+      ipa,
+      bahasaInggris
+    } = data;
+
+    // sementara aja
+    const year = 0
+
+    // mapping ke array of subject + score
+    const grades = [
+      { subject: "Bahasa Indonesia", score: bahasaIndonesia },
+      { subject: "Matematika", score: matematika },
+      { subject: "IPA", score: ipa },
+    ];
+
+    if (jenjang !== "SD" && typeof bahasaInggris === "number") {
+      grades.push({ subject: "Bahasa Inggris", score: bahasaInggris });
+    }
+
+    onSubmit({ ...data, total, average }); // ini dibuang kah ?
   };
 
   return (
@@ -125,9 +155,9 @@ export default function FormTambahNilai({
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sd">SD</SelectItem>
-                  <SelectItem value="smp">SMP</SelectItem>
-                  <SelectItem value="sma">SMA</SelectItem>
+                  <SelectItem value="SD">SD</SelectItem>
+                  <SelectItem value="SMP">SMP</SelectItem>
+                  <SelectItem value="SMA">SMA</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>

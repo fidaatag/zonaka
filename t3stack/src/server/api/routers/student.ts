@@ -318,7 +318,68 @@ export const studentRouter = createTRPCRouter({
           error: error instanceof Error ? error.message : "Unknown error",
         }
       }
-    })
+    }),
+
+
+  // create grades by semester
+  createGradesPerSemesterByStudentId: protectedProcedure
+    .input(
+      z.object({
+        studentId: z.string(),
+        schoolId: z.string(),
+        educationLevel: z.enum(["SD", "SMP", "SMA"]),
+        year: z.number(),
+        semester: z.number(),
+        gradeLevel: z.number(),
+
+        // harusnya ini array aja
+        grades: z.array(
+          z.object({
+            subject: z.string(),
+            score: z.number(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const {
+        studentId,
+        schoolId,
+        educationLevel,
+        year,
+        semester,
+        gradeLevel,
+        grades,
+      } = input;
+
+      try {
+        const result = await ctx.db.grade.createMany({
+          data: grades.map((g) => ({
+            studentId,
+            schoolId,
+            educationLevel,
+            year,
+            semester,
+            gradeLevel,
+            subject: g.subject,
+            score: g.score,
+          })),
+        });
+
+        return {
+          success: true,
+          message: "Berhasil menambahkan data nilai siswa",
+          count: result.count,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: "Gagal menambahkan data nilai siswa",
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    }),
+
 
 
 })

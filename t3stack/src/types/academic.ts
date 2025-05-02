@@ -20,7 +20,7 @@ export interface School {
   semester: Semester[];
 }
 
-export type Jenjang = "sd" | "smp" | "sma";
+export type Jenjang = "SD" | "SMP" | "SMA";
 
 export interface JenjangData {
   id: string;
