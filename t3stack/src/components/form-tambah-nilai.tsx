@@ -26,9 +26,8 @@ import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
-// Schema
-export const formSchema = z.object({
-  id: z.string().optional(), // ← ID untuk edit
+const formSchema = z.object({
+  id: z.string().optional(),
   jenjang: z.enum(["SD", "SMP", "SMA"]),
   sekolah: z.string().min(1),
   kelas: z.string().min(1),
@@ -52,6 +51,9 @@ export default function FormTambahNilai({
   sekolahAktif,
   jenjangAktif,
 }: FormTambahNilaiProps) {
+  const params = useParams();
+  const studentId = params?.id as string;
+
   const defaultValues: FormSchemaType = editData
     ? {
       id: editData.id,
@@ -62,12 +64,12 @@ export default function FormTambahNilai({
       bahasaIndonesia: editData.nilai.find(n => n.mapel === "Bahasa Indonesia")?.skor ?? 0,
       matematika: editData.nilai.find(n => n.mapel === "Matematika")?.skor ?? 0,
       ipa: editData.nilai.find(n => n.mapel === "IPA")?.skor ?? 0,
-      bahasaInggris: editData.nilai.find(n => n.mapel === "Bahasa Inggris")?.skor,
+      bahasaInggris: editData.nilai.find(n => n.mapel === "Bahasa Inggris")?.skor ?? 0,
     }
     : {
       id: undefined,
-      jenjang: "SD",
-      sekolah: "",
+      jenjang: jenjangAktif ?? "SD",
+      sekolah: sekolahAktif ?? "",
       kelas: "",
       semester: "1",
       bahasaIndonesia: 0,
@@ -75,13 +77,6 @@ export default function FormTambahNilai({
       ipa: 0,
       bahasaInggris: 0,
     };
-
-  const params = useParams();
-  const studentId = params?.id as string;
-
-  const { data: schoolHistories = [] } = api.student.getSchoolHistoryByStudentId.useQuery({
-    id: studentId,
-  });
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -92,43 +87,49 @@ export default function FormTambahNilai({
   const isSD = watchJenjang === "SD";
   const watchValues = form.watch();
 
+  const { data: schoolHistories = [] } = api.student.getSchoolHistoryByStudentId.useQuery({ id: studentId });
+
+  const createGrade = api.student.createGradesPerSemesterByStudentId.useMutation({
+    onSuccess: () => {
+      toast.success("Nilai siswa berhasil ditambahkan");
+      form.reset();
+    },
+    onError: (err) => {
+      toast.error("Gagal menambahkan nilai: " + err.message);
+    },
+  });
+
+  const updateGrade = api.student.updateGradesByGroupId.useMutation({
+    onSuccess: () => {
+      toast.success("Nilai siswa berhasil diperbarui");
+      form.reset();
+    },
+    onError: (err) => {
+      toast.error("Gagal memperbarui nilai: " + err.message);
+    },
+  });
+
   const filteredSchools = schoolHistories.filter(
-    (s) => s.educationLevel.toLowerCase() === watchJenjang.toLowerCase() &&
-      s.schoolId && s.schoolId.trim() !== ""
+    (s) => s.educationLevel.toLowerCase() === watchJenjang.toLowerCase() && s.schoolId?.trim()
   );
-
-
-  const nilaiList = [
-    Number(watchValues.bahasaIndonesia),
-    Number(watchValues.matematika),
-    Number(watchValues.ipa),
-  ];
-  if (!isSD) nilaiList.push(Number(watchValues.bahasaInggris));
-
-  const total = nilaiList.reduce((a, b) => a + b, 0);
-  const average = Number((total / nilaiList.length).toFixed(2));
 
   useEffect(() => {
     if (isSD) form.setValue("bahasaInggris", 0);
   }, [isSD, form]);
 
-  const kelasMap = {
-    SD: ["4", "5", "6"],
-    SMP: ["7", "8", "9"],
-    SMA: ["10", "11", "12"],
-  };
-
   useEffect(() => {
-
     if (filteredSchools.length > 0) {
-      const firstSchoolId = filteredSchools[0]!.schoolId;
-      if (firstSchoolId) {
-        form.setValue("sekolah", firstSchoolId);
-      }
+      const first = filteredSchools[0]!;
+      form.setValue("sekolah", first.schoolId!);
     } else {
       form.setValue("sekolah", "");
     }
 
+    const kelasMap = {
+      SD: ["4", "5", "6"],
+      SMP: ["7", "8", "9"],
+      SMA: ["10", "11", "12"],
+    };
     const validKelas = kelasMap[watchJenjang];
     const currentKelas = form.getValues("kelas");
     if (!validKelas.includes(currentKelas)) {
@@ -136,62 +137,61 @@ export default function FormTambahNilai({
     }
   }, [watchJenjang]);
 
+  const nilaiList = [
+    watchValues.bahasaIndonesia,
+    watchValues.matematika,
+    watchValues.ipa,
+    ...(isSD ? [] : [watchValues.bahasaInggris ?? 0]),
+  ];
 
-
-  const createGrade = api.student.createGradesPerSemesterByStudentId.useMutation({
-    onSuccess: () => {
-      toast.success("Nilai siswa berhasil ditambahkan")
-      form.reset()
-      // onClose?.()  // close setelah submit 
-    },
-    onError: (err) => {
-      toast.error("Gagal menambahkan nilai siswa: " + err.message)
-    },
-  });
-
+  const total = nilaiList.reduce((a, b) => a + b, 0);
+  const average = Number((total / nilaiList.length).toFixed(2));
 
   const handleSubmitForm = (data: FormSchemaType) => {
-    const {
-      jenjang,
-      sekolah,
-      kelas,
-      semester,
-      bahasaIndonesia,
-      matematika,
-      ipa,
-      bahasaInggris
-    } = data;
+    const year = new Date().getFullYear();
+    const common = {
+      studentId,
+      schoolId: data.sekolah,
+      educationLevel: data.jenjang,
+      gradeLevel: parseInt(data.kelas),
+      semester: parseInt(data.semester),
+      year,
+    };
 
-    // sementara aja
-    const year = 0
-
-    // mapping ke array of subject + score
-    const grades = [
-      { subject: "Bahasa Indonesia", score: bahasaIndonesia },
-      { subject: "Matematika", score: matematika },
-      { subject: "IPA", score: ipa },
+    const subjects = [
+      { subject: "Bahasa Indonesia", score: data.bahasaIndonesia },
+      { subject: "Matematika", score: data.matematika },
+      { subject: "IPA", score: data.ipa },
+      ...(data.jenjang !== "SD" ? [{ subject: "Bahasa Inggris", score: data.bahasaInggris ?? 0 }] : []),
     ];
 
-    if (jenjang !== "SD" && typeof bahasaInggris === "number") {
-      grades.push({ subject: "Bahasa Inggris", score: bahasaInggris });
+    if (editData) {
+      updateGrade.mutate({
+        ...common,
+        subjects: subjects.map((s) => {
+          const existing = editData.nilai.find((n) => n.mapel === s.subject);
+          return {
+            gradeId: existing?.id ?? "", // harusnya selalu ada
+            subject: s.subject,
+            score: s.score,
+          };
+        }),
+      });
+    } else {
+      createGrade.mutate({
+        ...common,
+        grades: subjects,
+      });
     }
 
-    createGrade.mutate({
-      studentId: studentId,
-      schoolId: sekolah,
-      educationLevel: jenjang,
-      year: year,
-      semester: parseInt(semester),
-      gradeLevel: parseInt(kelas),
-      grades,
-    })
-
+    onSubmit({ ...data, total, average });
   };
 
   return (
     <Card className="p-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-4">
+          {/* Jenjang */}
           <FormField control={form.control} name="jenjang" render={({ field }) => (
             <FormItem>
               <FormLabel>Jenjang</FormLabel>
@@ -205,13 +205,13 @@ export default function FormTambahNilai({
               </Select>
             </FormItem>
           )} />
+
+          {/* Sekolah */}
           <FormField control={form.control} name="sekolah" render={({ field }) => (
             <FormItem>
               <FormLabel>Nama Sekolah</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih sekolah" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih sekolah" /></SelectTrigger>
                 <SelectContent>
                   {filteredSchools.length === 0 ? (
                     <SelectItem value="-" disabled>Tidak ada sekolah</SelectItem>
@@ -224,27 +224,37 @@ export default function FormTambahNilai({
                   )}
                 </SelectContent>
               </Select>
+            </FormItem>
+          )} />
 
-            </FormItem>
-          )} />
-          <FormField control={form.control} name="kelas" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Kelas</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                <SelectContent>
-                  {kelasMap[watchJenjang].map(k => (
-                    <SelectItem key={k} value={k}>{k}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )} />
+          {/* Kelas */}
+          <FormField control={form.control} name="kelas" render={({ field }) => {
+            const kelasMap = {
+              SD: ["4", "5", "6"],
+              SMP: ["7", "8", "9"],
+              SMA: ["10", "11", "12"],
+            };
+            return (
+              <FormItem>
+                <FormLabel>Kelas</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {kelasMap[watchJenjang].map(k => (
+                      <SelectItem key={k} value={k}>{k}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            );
+          }} />
+
+          {/* Semester */}
           <FormField control={form.control} name="semester" render={({ field }) => (
             <FormItem>
               <FormLabel>Semester</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">1</SelectItem>
                   <SelectItem value="2">2</SelectItem>
@@ -252,24 +262,16 @@ export default function FormTambahNilai({
               </Select>
             </FormItem>
           )} />
-          <FormField control={form.control} name="bahasaIndonesia" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bahasa Indonesia</FormLabel>
-              <FormControl><Input type="number" {...field} /></FormControl>
-            </FormItem>
-          )} />
-          <FormField control={form.control} name="matematika" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Matematika</FormLabel>
-              <FormControl><Input type="number" {...field} /></FormControl>
-            </FormItem>
-          )} />
-          <FormField control={form.control} name="ipa" render={({ field }) => (
-            <FormItem>
-              <FormLabel>IPA</FormLabel>
-              <FormControl><Input type="number" {...field} /></FormControl>
-            </FormItem>
-          )} />
+
+          {/* Nilai */}
+          {["bahasaIndonesia", "matematika", "ipa"].map((key) => (
+            <FormField key={key} control={form.control} name={key as keyof FormSchemaType} render={({ field }) => (
+              <FormItem>
+                <FormLabel>{key === "bahasaIndonesia" ? "Bahasa Indonesia" : key.charAt(0).toUpperCase() + key.slice(1)}</FormLabel>
+                <FormControl><Input type="number" {...field} /></FormControl>
+              </FormItem>
+            )} />
+          ))}
           {!isSD && (
             <FormField control={form.control} name="bahasaInggris" render={({ field }) => (
               <FormItem>
@@ -278,6 +280,8 @@ export default function FormTambahNilai({
               </FormItem>
             )} />
           )}
+
+          {/* Total & Average */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <FormLabel>Total</FormLabel>
@@ -288,6 +292,7 @@ export default function FormTambahNilai({
               <Input readOnly value={average} />
             </div>
           </div>
+
           <Button type="submit" className="w-full">
             {editData ? "Simpan Perubahan" : "Tambah Data"}
           </Button>

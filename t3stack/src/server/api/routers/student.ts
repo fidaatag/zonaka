@@ -459,6 +459,76 @@ export const studentRouter = createTRPCRouter({
     }),
 
 
+  // update grades student
+  updateGradesByGroupId: protectedProcedure
+    .input(
+      z.object({
+        studentId: z.string(),
+        schoolId: z.string(),
+        educationLevel: z.enum(["SD", "SMP", "SMA"]),
+        gradeLevel: z.number(),
+        semester: z.number(),
+        year: z.number().optional(),
+        subjects: z.array(
+          z.object({
+            gradeId: z.string(),
+            subject: z.string(),
+            score: z.number(),
+          })
+        )
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { studentId, schoolId, educationLevel, gradeLevel, semester, year, subjects } = input;
+
+      const existingGrades = await ctx.db.grade.findMany({
+        where: {
+          studentId,
+          schoolId,
+          educationLevel,
+          gradeLevel,
+          semester,
+        },
+      });
+
+      const updates = [];
+      const inserts = [];
+
+      for (const s of subjects) {
+        if (existingGrades.find(g => g.subject === s.subject)) {
+          updates.push(
+            ctx.db.grade.update({
+              where: { id: s.gradeId },
+              data: {
+                score: s.score,
+              }
+            })
+          );
+        } else {
+          inserts.push(
+            ctx.db.grade.create({
+              data: {
+                studentId,
+                schoolId,
+                educationLevel,
+                gradeLevel,
+                semester,
+                subject: s.subject,
+                score: s.score,
+                year: year ?? new Date().getFullYear(),
+              }
+            })
+          );
+        }
+      }
+
+      await ctx.db.$transaction([...updates, ...inserts]);
+
+      return { success: true, message: "Nilai berhasil diperbarui" };
+    }),
+
+
+
 
 
 })
