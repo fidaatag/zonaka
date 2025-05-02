@@ -1,12 +1,11 @@
 'use client'
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useParams } from "next/navigation"
 import { api } from "@/trpc/react"
 import { DialogTambahSekolahSiswa } from "./dialog-tambah-sekolah-siswa"
+import { DialogEditSekolahSiswa } from "./dialog-edit-sekolah-siswa"
 
 export default function CardSchool() {
   const params = useParams()
@@ -29,20 +28,7 @@ export default function CardSchool() {
         <ScrollArea className="h-96 pr-2">
           <div className="space-y-4">
             {data.map((item, i) => (
-              <Card key={i} className="border rounded-xl p-4">
-                <div className="flex justify-between mb-2">
-                  <h3 className="font-semibold">
-                    {item.school?.name || item.schoolName || "Nama sekolah tidak tersedia"}
-                  </h3>
-                  <Badge variant="outline">
-                    {item.isCurrent ? "Active" : item.graduationYear ? "Lulus" : "Keluar"}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  <p>Tahun masuk: {item.entryYear ?? "-"}</p>
-                  <p>Tahun lulus / keluar: {item.graduationYear ?? "-"}</p>
-                </div>
-              </Card>
+              <DialogEditSekolahSiswa key={i} data={item} />
             ))}
           </div>
         </ScrollArea>

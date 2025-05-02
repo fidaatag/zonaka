@@ -218,6 +218,7 @@ export const studentRouter = createTRPCRouter({
       return await ctx.db.schoolHistory.findMany({
         where: { studentId: input.id },
         select: {
+          id: true,
           schoolId: true,
           school: true,
           schoolName: true,
