@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Jenjang, FormSchemaType, Semester } from "@/types/academic";
 import { api } from "@/trpc/react";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
 
 // Schema
 export const formSchema = z.object({
@@ -74,6 +76,13 @@ export default function FormTambahNilai({
       bahasaInggris: 0,
     };
 
+  const params = useParams();
+  const studentId = params?.id as string;
+
+  const { data: schoolHistories = [] } = api.student.getSchoolHistoryByStudentId.useQuery({
+    id: studentId,
+  });
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -82,6 +91,12 @@ export default function FormTambahNilai({
   const watchJenjang = form.watch("jenjang");
   const isSD = watchJenjang === "SD";
   const watchValues = form.watch();
+
+  const filteredSchools = schoolHistories.filter(
+    (s) => s.educationLevel.toLowerCase() === watchJenjang.toLowerCase() &&
+      s.schoolId && s.schoolId.trim() !== ""
+  );
+
 
   const nilaiList = [
     Number(watchValues.bahasaIndonesia),
@@ -104,6 +119,16 @@ export default function FormTambahNilai({
   };
 
   useEffect(() => {
+
+    if (filteredSchools.length > 0) {
+      const firstSchoolId = filteredSchools[0]!.schoolId;
+      if (firstSchoolId) {
+        form.setValue("sekolah", firstSchoolId);
+      }
+    } else {
+      form.setValue("sekolah", "");
+    }
+
     const validKelas = kelasMap[watchJenjang];
     const currentKelas = form.getValues("kelas");
     if (!validKelas.includes(currentKelas)) {
@@ -113,7 +138,16 @@ export default function FormTambahNilai({
 
 
 
-  const createGrade = api.student.createGradesPerSemesterByStudentId.useMutation();
+  const createGrade = api.student.createGradesPerSemesterByStudentId.useMutation({
+    onSuccess: () => {
+      toast.success("Nilai siswa berhasil ditambahkan")
+      form.reset()
+      // onClose?.()  // close setelah submit 
+    },
+    onError: (err) => {
+      toast.error("Gagal menambahkan nilai siswa: " + err.message)
+    },
+  });
 
 
   const handleSubmitForm = (data: FormSchemaType) => {
@@ -142,7 +176,16 @@ export default function FormTambahNilai({
       grades.push({ subject: "Bahasa Inggris", score: bahasaInggris });
     }
 
-    onSubmit({ ...data, total, average }); // ini dibuang kah ?
+    createGrade.mutate({
+      studentId: studentId,
+      schoolId: sekolah,
+      educationLevel: jenjang,
+      year: year,
+      semester: parseInt(semester),
+      gradeLevel: parseInt(kelas),
+      grades,
+    })
+
   };
 
   return (
@@ -165,7 +208,23 @@ export default function FormTambahNilai({
           <FormField control={form.control} name="sekolah" render={({ field }) => (
             <FormItem>
               <FormLabel>Nama Sekolah</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih sekolah" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSchools.length === 0 ? (
+                    <SelectItem value="-" disabled>Tidak ada sekolah</SelectItem>
+                  ) : (
+                    filteredSchools.map((s) => (
+                      <SelectItem key={s.schoolId} value={s.schoolId!}>
+                        {s.school?.name ?? s.schoolName ?? "Tanpa nama"}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+
             </FormItem>
           )} />
           <FormField control={form.control} name="kelas" render={({ field }) => (
@@ -220,8 +279,14 @@ export default function FormTambahNilai({
             )} />
           )}
           <div className="grid grid-cols-2 gap-4">
-            <Input readOnly value={total} />
-            <Input readOnly value={average} />
+            <div className="space-y-2">
+              <FormLabel>Total</FormLabel>
+              <Input readOnly value={total} />
+            </div>
+            <div className="space-y-2">
+              <FormLabel>Rata-rata</FormLabel>
+              <Input readOnly value={average} />
+            </div>
           </div>
           <Button type="submit" className="w-full">
             {editData ? "Simpan Perubahan" : "Tambah Data"}
