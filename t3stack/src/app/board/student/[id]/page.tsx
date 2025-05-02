@@ -3,6 +3,7 @@ import CardAcademic from "@/components/card-academic";
 import FormDataOrangTua from "@/components/form-data-orang-tua";
 import FormDataSiswa from "@/components/form-data-siswa";
 import GridStudentId from "@/components/grid-student-id";
+import CardSchool from "@/components/card-school";
 
 export default function PageStudentId() {
   return (
@@ -13,7 +14,7 @@ export default function PageStudentId() {
         component2={<FormDataSiswa />}
         component3={<ChainSiswaId />}
         component4={<CardAcademic />}
-        component5={<span className="text-4xl font-bold">5</span>}
+        component5={<CardSchool />}
       />
 
 
