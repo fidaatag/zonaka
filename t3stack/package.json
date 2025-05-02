@@ -6,6 +6,7 @@
   "scripts": {
     "build": "next build",
     "check": "next lint && tsc --noEmit",
+    "db:seed": "npx tsx prisma/seed.ts",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
@@ -46,6 +47,7 @@
     "@trpc/server": "^11.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "csv-parser": "^3.2.0",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.501.0",
     "next": "^15.2.3",
