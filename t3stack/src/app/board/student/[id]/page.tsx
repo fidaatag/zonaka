@@ -13,9 +13,7 @@ export default function PageStudentId() {
       <GridStudentId
         component1={<FormDataOrangTua />}
         component2={<FormDataSiswa />}
-        // component3={<ChainSiswaId />}
-        component3={<p>okok</p>}
-
+        component3={<ChainSiswaId />}
         component4={<CardAcademic />}
         component5={<CardSchool />}
       />
