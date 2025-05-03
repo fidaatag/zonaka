@@ -20,7 +20,7 @@ export default function PageStudentId() {
         component5={<CardSchool />}
       />
 
-      <span className="my-10"></span>
+      <span className="mt-90"></span>
 
       <CardIncaranSekolah />
 
