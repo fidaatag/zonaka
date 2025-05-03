@@ -6,35 +6,37 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { FormTambahAnak } from "./form-tambah-anak";
+import { useParams } from "next/navigation"
+import { api } from "@/trpc/react"
+import { ResumePreview } from "./resume-preview"
 
 export function DialogQueuChainSiswa() {
+  const { id } = useParams()
+  const { data, isLoading } = api.student.getResumeAcademyByStudentId.useQuery({
+    studentId: id as string,
+  })
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button className="self-start md:self-auto w-full p-5">
-          Masukan ke Antrian Push Chain
+          Masukkan ke Antrian Push Chain
         </Button>
       </DialogTrigger>
-      <DialogContent
-        onInteractOutside={(e) => {
-          e.preventDefault();
-        }}
-        className="overflow-y-scroll lg:overflow-auto max-h-screen"
-      >
+      <DialogContent className="overflow-y-scroll max-h-screen max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Tambah Anak</DialogTitle>
-          <DialogDescription>
-            Silakan isi informasi dasar orang tua dan anak. 
-            Data ini akan digunakan untuk membuat profil anak dalam sistem Zonaka.
-          </DialogDescription>
-
+          <DialogTitle>Cek Data Sebelum Ke Chain</DialogTitle>
         </DialogHeader>
 
-        <FormTambahAnak />
+        {isLoading ? (
+          <p>Loading data...</p>
+        ) : data ? (
+          <ResumePreview resume={data} />
+        ) : (
+          <p>Gagal memuat data.</p>
+        )}
       </DialogContent>
     </Dialog>
   )

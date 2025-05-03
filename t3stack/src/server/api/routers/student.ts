@@ -675,6 +675,171 @@ export const studentRouter = createTRPCRouter({
 
 
 
+  // student resume push to chain
+  getResumeAcademyByStudentId: protectedProcedure
+    .input(z.object({ studentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const student = await ctx.db.student.findUnique({
+        where: { id: input.studentId },
+        include: {
+          parent: {
+            select: {
+              name: true,
+              relations: true,
+              phoneNumber: true,
+              address: {
+                select: {
+                  full: true,
+                  postalCode: true,
+                  latitude: true,
+                  longitude: true,
+                },
+              },
+            },
+          },
+          address: {
+            select: {
+              full: true,
+              postalCode: true,
+              latitude: true,
+              longitude: true,
+            },
+          },
+          grades: {
+            orderBy: [
+              { educationLevel: "asc" },
+              { gradeLevel: "asc" },
+              { semester: "asc" },
+            ],
+          },
+          schoolHistory: {
+            include: {
+              school: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          targetSchools: {
+            include: {
+              school: {
+                select: {
+                  id: true,
+                  name: true,
+                  educationLevel: true,
+                  address: {
+                    select: {
+                      full: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+
+      if (!student) throw new Error("Student not found")
+
+      // Group grades by school history
+      const groupedBySchool = student.schoolHistory.map((history) => {
+        const gradesThisSchool = student.grades.filter(
+          (g) => g.schoolId === history.schoolId
+        )
+
+        const academicRecords = gradesThisSchool.map((grade) => {
+          return {
+            gradeId: grade.id,
+            gradeLevel: grade.gradeLevel,
+            semester: grade.semester,
+            year: grade.year,
+            subjects: [
+              {
+                name: grade.subject,
+                score: grade.score,
+              },
+            ],
+            total: grade.score,
+            average: grade.score,
+          }
+        })
+
+        const mergedByGradeSemester = Object.values(
+          academicRecords.reduce((acc, cur) => {
+            const key = `${cur.gradeLevel}-${cur.semester}-${cur.year}`
+            if (!acc[key]) {
+              acc[key] = {
+                gradeId: cur.gradeId,
+                gradeLevel: cur.gradeLevel,
+                semester: cur.semester,
+                year: cur.year,
+                subjects: [],
+                total: 0,
+                average: 0,
+              }
+            }
+            acc[key].subjects.push(...cur.subjects)
+            acc[key].total += cur.total
+            acc[key].average = acc[key].total / acc[key].subjects.length
+            return acc
+          }, {} as Record<string, any>)
+        )
+
+        return {
+          educationLevel: history.educationLevel,
+          schoolId: history.schoolId!,
+          schoolName: history.school?.name ?? history.schoolName,
+          entryYear: history.entryYear,
+          isCurrent: history.isCurrent,
+          academicRecords: mergedByGradeSemester.map((r) => ({
+            ...r,
+            average: Number(r.average.toFixed(2)),
+          })),
+        }
+      })
+
+      const jenjangMapping: Record<string, string> = {
+        sd: "smp",
+        smp: "sma",
+      }
+
+      const targets = groupedBySchool.map((grade) => {
+        const nextJenjang = jenjangMapping[grade.educationLevel.toLowerCase()] ?? ""
+        const targetList = student.targetSchools.filter(
+          (t) => t.school.educationLevel.toLowerCase() === nextJenjang
+        )
+        return {
+          educationLevel: grade.educationLevel.toLowerCase(),
+          nextTargetJenjang: nextJenjang,
+          schools: targetList.map((s) => ({
+            targetId: s.id,
+            schoolId: s.school.id,
+            schoolName: s.school.name,
+            address: s.school.address.full,
+          })),
+        }
+      })
+      
+
+      return {
+        parent: {
+          name: student.parent?.name ?? "-",
+          relation: student.parent?.relations ?? "-",
+          phone: student.parent?.phoneNumber ?? "-",
+          address: {
+            full: student.parent?.address.full ?? "-",
+            latitude: student.parent?.address.latitude ?? 0,
+            longitude: student.parent?.address.longitude ?? 0,
+            postalCode: student.parent?.address.postalCode ?? "-",
+          },
+        },
+        grades: groupedBySchool,
+        targets,
+      }
+    }),
+
 
 
 
