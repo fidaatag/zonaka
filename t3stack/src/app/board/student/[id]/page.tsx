@@ -4,6 +4,7 @@ import FormDataOrangTua from "@/components/form-data-orang-tua";
 import FormDataSiswa from "@/components/form-data-siswa";
 import GridStudentId from "@/components/grid-student-id";
 import CardSchool from "@/components/card-school";
+import CardIncaranSekolah from "@/components/card-incaran-sekolah";
 
 export default function PageStudentId() {
   return (
@@ -18,6 +19,10 @@ export default function PageStudentId() {
         component4={<CardAcademic />}
         component5={<CardSchool />}
       />
+
+      <span className="mt-90"></span>
+
+      <CardIncaranSekolah />
 
 
 

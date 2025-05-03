@@ -528,6 +528,153 @@ export const studentRouter = createTRPCRouter({
     }),
 
 
+  // create Target School by Stundent Id
+  createTargetSchoolByStudentId: protectedProcedure
+    .input(
+      z.object({
+        studentId: z.string(),
+        schoolId: z.string(),
+        educationLevel: z.enum(["SD", "SMP", "SMA"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { studentId, schoolId, educationLevel } = input;
+
+      // Cek berapa banyak targetSchool yang sudah dimiliki siswa untuk jenjang ini
+      const count = await ctx.db.targetSchool.count({
+        where: {
+          studentId,
+          school: {
+            educationLevel: educationLevel, // Pastikan field ini ada di model School
+          },
+        },
+      });
+
+      if (count >= 3) {
+        throw new Error(
+          `Siswa ini sudah memilih 3 sekolah untuk jenjang ${educationLevel}`
+        );
+      }
+
+      // Cek duplikasi: apakah sekolah ini sudah dipilih sebelumnya
+      const existing = await ctx.db.targetSchool.findFirst({
+        where: {
+          studentId,
+          schoolId,
+        },
+      });
+
+      if (existing) {
+        throw new Error("Sekolah ini sudah ditambahkan sebagai target.");
+      }
+
+      // Lolos validasi, buat targetSchool
+      return await ctx.db.targetSchool.create({
+        data: {
+          studentId,
+          schoolId,
+          educationLevel,
+        },
+      });
+    }),
+
+
+  // get target school
+  getTargetSchoolByStudentId: protectedProcedure
+    .input(z.object({ studentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { studentId } = input;
+
+      const targets = await ctx.db.targetSchool.findMany({
+        where: { studentId },
+        include: {
+          school: {
+            select: {
+              name: true,
+              educationLevel: true,
+              address: {
+                select: {
+                  full: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const grouped = ["SD", "SMP", "SMA"].map((level) => ({
+        educationLevel: level,
+        data: targets
+          .filter((t) => t.school.educationLevel === level)
+          .map((t) => ({
+            targetId: t.id,
+            schoolId: t.schoolId,
+            name: t.school.name,
+            address: t.school.address.full,
+          })),
+      }));
+
+      return { target: grouped };
+    }),
+
+
+  // update target school
+  updateTargetSchoolById: protectedProcedure
+    .input(
+      z.object({
+        targetId: z.string(),
+        newSchoolId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { targetId, newSchoolId } = input;
+
+      // Cari target lama
+      const existingTarget = await ctx.db.targetSchool.findUnique({
+        where: { id: targetId },
+        include: { student: true, school: true },
+      });
+
+      if (!existingTarget) {
+        throw new Error("Data target tidak ditemukan.");
+      }
+
+      // Cek apakah student ini sudah punya sekolah yang sama (hindari duplikat)
+      const alreadyExists = await ctx.db.targetSchool.findFirst({
+        where: {
+          studentId: existingTarget.studentId,
+          schoolId: newSchoolId,
+          NOT: { id: targetId }, // Kecuali dirinya sendiri
+        },
+      });
+
+      if (alreadyExists) {
+        throw new Error("Sekolah ini sudah ada di daftar target.");
+      }
+
+      // Update
+      return await ctx.db.targetSchool.update({
+        where: { id: targetId },
+        data: {
+          schoolId: newSchoolId,
+        },
+      });
+    }),
+
+
+  // delete target school
+  deleteTargetSchoolById: protectedProcedure
+    .input(z.object({ targetId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { targetId } = input;
+
+      return await ctx.db.targetSchool.delete({
+        where: { id: targetId },
+      });
+    }),
+
+
+
 
 
 
