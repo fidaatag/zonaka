@@ -130,8 +130,7 @@ model Student {
   schoolHistory SchoolHistory[]
   achievements  Achievement[]
   targetSchools TargetSchool[]
-  chainHistory  ChainPushHistory[]
-  pushQueue     PushQueue[]
+  QueuePushChain QueuePushChain[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -255,26 +254,22 @@ model SchoolPPDBInfo {
   updatedAt                DateTime       @updatedAt
 }
 
-model ChainPushHistory {
-  id          String   @id @default(uuid())
+model QueuePushChain {
+  id          String     @id @default(uuid())
   studentId   String
-  student     Student  @relation(fields: [studentId], references: [id])
-  version     Int
-  pushedAt    DateTime @default(now())
-  snapshot    Json
-  notes       String?
-  chainTxId   String?
-  explorerUrl String?
-  createdAt   DateTime @default(now())
-}
-
-model PushQueue {
-  id          String    @id @default(uuid())
-  studentId   String
-  student     Student   @relation(fields: [studentId], references: [id])
+  student     Student    @relation(fields: [studentId], references: [id])
   version     Int
   payload     Json
-  ready       Boolean   @default(false)
-  processedAt DateTime?
-  createdAt   DateTime  @default(now())
+  ready       Boolean    @default(false)
+  status      PushStatus @default(pending) // ✅ status enum
+  chainTxId   String? // opsional, ID transaksi di chain
+  explorerUrl String? // opsional, link ke explorer chain
+  processedAt DateTime? // ✅ waktu ketika berhasil push
+  createdAt   DateTime   @default(now())
+}
+
+enum PushStatus {
+  pending // validasi sudah oke tapi belum dipush
+  pushed // berhasil dikirim ke chain
+  failed // push gagal (misal timeout, error tx)
 }
