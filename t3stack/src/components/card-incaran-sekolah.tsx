@@ -45,6 +45,21 @@ export default function CardIncaranSekolah() {
     })
   }
 
+  const deleteTarget = api.student.deleteTargetSchoolById.useMutation({
+    onSuccess: () => {
+      toast.success("Berhasil menghapus sekolah incaran")
+      refetch()
+    },
+    onError: (err) => {
+      toast.error(err.message)
+    }
+  })
+
+  const handleDelete = (targetId: string) => {
+    deleteTarget.mutate({ targetId })
+  }
+
+
   const filteredSchoolOptions = schoolHistory?.filter((s) => s.educationLevel === selectedJenjang) ?? []
   const filteredTargetData = targetData?.target.find((t) => t.educationLevel === selectedJenjang)?.data ?? []
 
@@ -81,11 +96,20 @@ export default function CardIncaranSekolah() {
             <div className="space-y-2">
               {jenjang === selectedJenjang && filteredTargetData.length > 0 ? (
                 filteredTargetData.map((item, i) => (
-                  <p key={item.targetId}>
-                    {i + 1}. {item.name} - {item.address}
-                  </p>
+                  <div key={item.targetId} className="flex items-center justify-between border p-2 rounded">
+                    <span>
+                      {i + 1}. {item.name} - {item.address}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(item.targetId)}
+                      className="text-red-600 text-sm hover:underline"
+                    >
+                      Hapus
+                    </button>
+                  </div>
                 ))
               ) : (
+
                 <p className="text-gray-500 italic">Belum ada sekolah incaran</p>
               )}
             </div>
