@@ -4,8 +4,11 @@ import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { api } from "@/trpc/react"
 
 type ResumePreviewProps = {
+  setOpen: (open: boolean) => void
   resume: {
     parent: {
       name: string
@@ -17,7 +20,13 @@ type ResumePreviewProps = {
         longitude: number
         postalCode: string
       }
-    }
+    },
+    student: {
+      id: string
+      name: string
+      gender: string
+      birthDate: string
+    },
     grades: {
       educationLevel: string
       schoolId: string
@@ -47,12 +56,12 @@ type ResumePreviewProps = {
   }
 }
 
-export function ResumePreview({ resume }: ResumePreviewProps) {
+export function ResumePreview({ resume, setOpen }: ResumePreviewProps) {
   const jenjangOrder = ["sd", "smp", "sma"]
   const jenjangList = jenjangOrder.filter((j) =>
     resume.grades.some((g) => g.educationLevel.toLowerCase() === j)
   )
-    
+
   const [selectedJenjang, setSelectedJenjang] = useState(jenjangList[0] ?? "sd")
 
   const currentGradeData = resume.grades.find(
@@ -61,6 +70,42 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
   const currentTarget = resume.targets.find(
     (t) => t.educationLevel.toLowerCase() === selectedJenjang
   )
+
+
+  const createQueue = api.student.createQueueChainPush.useMutation({
+    onSuccess: () => toast.success("Data berhasil dimasukkan ke antrian!"),
+    onError: (err) => toast.error(err.message || "Gagal memvalidasi data."),
+  })
+
+  const handleSubmit = () => {
+    if (!resume.student.id || !currentGradeData || !currentTarget) {
+      toast.error("Data belum lengkap.");
+      return;
+    }
+
+    const payload = {
+      student: {
+        name: resume.student.name,
+        birthDate: resume.student.birthDate,
+        gender: resume.student.gender.toUpperCase() as "MALE" | "FEMALE",
+      },
+      parent: resume.parent,
+      grades: [currentGradeData],
+      targets: [currentTarget],
+    }
+
+    createQueue.mutate({
+      studentId: resume.student.id,
+      payload,
+    })
+
+    setTimeout(() => {
+      setOpen(false);
+    }, 3000);
+
+  }
+
+
 
   return (
     <div className="space-y-6">
@@ -71,8 +116,6 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
           <p>Nama: {resume.parent.name}</p>
           <p>Relasi: {resume.parent.relation}</p>
           <p>Telepon: {resume.parent.phone}</p>
-        </div>
-        <div>
           <h3 className="font-semibold mb-1">Alamat</h3>
           <p>{resume.parent.address.full}</p>
           <p>Kode Pos: {resume.parent.address.postalCode}</p>
@@ -80,6 +123,12 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
             Koordinat: {resume.parent.address.latitude},{" "}
             {resume.parent.address.longitude}
           </p>
+        </div>
+        <div>
+          <h3 className="font-semibold mb-1">Data Siswa</h3>
+          <p>Nama: {resume.student.name}</p>
+          <p>Gender: {resume.student.gender}</p>
+          <p>Tanggal lahir: {resume.student.birthDate} </p>
         </div>
       </div>
 
@@ -166,7 +215,9 @@ export function ResumePreview({ resume }: ResumePreviewProps) {
       </Tabs>
 
       <div className="flex justify-end pt-2">
-        <Button>Data Valid</Button>
+        <Button onClick={handleSubmit} disabled={createQueue.status === "pending"}>
+          {createQueue.status === "pending" ? "Menyimpan..." : "Data Valid"}
+        </Button>
       </div>
     </div>
   )

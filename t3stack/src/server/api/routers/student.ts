@@ -1,5 +1,7 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import type { Jenjang, JenjangData } from "@/types/academic";
+import { PushQueuePayloadSchema } from "@/types/payload";
+import { TRPCError } from "@trpc/server";
 import { add } from "date-fns";
 import { z } from "zod";
 
@@ -821,7 +823,7 @@ export const studentRouter = createTRPCRouter({
           })),
         }
       })
-      
+
 
       return {
         parent: {
@@ -835,11 +837,69 @@ export const studentRouter = createTRPCRouter({
             postalCode: student.parent?.address.postalCode ?? "-",
           },
         },
+        student: {
+          id: student.id,
+          name: student.name,
+          birthDate: student.birthDate.toISOString().split("T")[0]!,
+          gender: student.gender!,
+        },        
         grades: groupedBySchool,
         targets,
       }
     }),
 
+
+  // createQueuePushChain
+
+  createQueueChainPush: protectedProcedure
+    .input(
+      z.object({
+        studentId: z.string(),
+        payload: PushQueuePayloadSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { studentId, payload } = input;
+
+      // 1. Cek apakah sudah ada antrian pending
+      const existingQueue = await ctx.db.queuePushChain.findFirst({
+        where: {
+          studentId,
+          status: "pending",
+        },
+      });
+
+      if (existingQueue) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Siswa masih memiliki antrian aktif yang belum diproses.",
+        });
+      }
+
+      // 2. Ambil versi terakhir
+      const last = await ctx.db.queuePushChain.findFirst({
+        where: { studentId },
+        orderBy: { version: "desc" },
+      });
+
+      const nextVersion = last ? last.version + 1 : 1;
+
+      // 3. Simpan ke QueuePushChain
+      await ctx.db.queuePushChain.create({
+        data: {
+          studentId,
+          version: nextVersion,
+          payload,
+          ready: true,
+          status: "pending",
+        },
+      });
+
+      return {
+        success: true,
+        message: "Data berhasil dimasukkan ke antrian push chain.",
+      }
+    }),
 
 
 
