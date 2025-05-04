@@ -62,5 +62,9 @@ module {
         case null [];
       }
     };
+
+    public func getMap(): HashMap.HashMap<Text, T.School> {
+      schools;
+    };
   };
 }
