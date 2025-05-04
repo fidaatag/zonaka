@@ -1,62 +1,61 @@
-"use client"; // ⬅️ HARUS di atas sendiri!
+// src/lib/icp/create-actor.ts
 
+import dotenv from "dotenv";
+dotenv.config();
 
-import { env } from '@/env';
-import { Actor, HttpAgent, type Identity } from '@dfinity/agent';
-import { idlFactory } from './idl-factory';
+import { Actor, HttpAgent, type ActorSubclass, type Identity } from "@dfinity/agent";
+import { idlFactory as baseFactory } from "./idl-factory";
+// import { idlFactory as studentFactory } from "./idl-factory-student";
+import { idlFactorySchool as schoolFactory } from "./idl-factory-school";
+// import { idlFactory as predictFactory } from "./idl-factory-predict";
 
-// Replace with your canister ID
-const CANISTER_ID = env.NEXT_PUBLIC_IC_CANISTER_ID;
-
-let agent: HttpAgent | null = null;
+type CanisterName = "base" | "student" | "school" | "predict";
 
 /**
- * Initialize the HTTP agent to interact with the ICP network.
- * Wrap in try-catch to gracefully handle connection errors.
+ * Universal actor creator usable both in server (SSR/tRPC) and client (React).
  */
-async function initAgent() {
-  try {
-    agent = await HttpAgent.create({
-      host: env.NEXT_PUBLIC_IC_HOST, // Mainnet or local replica host
-    });
+export const createActor = async (
+  canisterName: CanisterName = "base",
+  identity?: Identity
+): Promise<ActorSubclass<any>> => {
+  const agent = new HttpAgent({
+    host: process.env.NEXT_PUBLIC_IC_HOST,
+    identity,
+  });
 
-    // Remove this line in production to avoid fetching the root key
-    if (env.NODE_ENV !== 'production') {
+  // Only fetch root key in local/dev environments
+  if (process.env.NODE_ENV !== "production") {
+    // Prevent crash if running in server environment (no `window`)
+    try {
       await agent.fetchRootKey();
+    } catch (err) {
+      console.warn("[ICP] fetchRootKey skipped (likely SSR):", err);
     }
-  } catch (error) {
-    console.error('Failed to initialize HTTP agent:', error);
-    agent = null; // Mark agent as unavailable
-  }
-}
-
-// Call the agent initialization
-await initAgent();
-
-/**
- * Create an actor to interact with the canister.
- * Throws an error if the agent is not available.
- */
-export const createActor = async (identity?: Identity) => {
-
-  const actorAgent = identity
-    ? await HttpAgent.create({ host: env.NEXT_PUBLIC_IC_HOST, identity })
-    : agent;
-
-  if (!actorAgent) {
-    throw new Error('Agent is not initialized. Cannot create actor.');
   }
 
-  // If creating a new agent with identity in dev, fetch root key again
-  if (identity && env.NODE_ENV !== 'production') {
-    actorAgent.fetchRootKey();
-  }
+  const mapping: Record<CanisterName, { idlFactory: any; canisterId: string }> = {
+    base: {
+      idlFactory: baseFactory,
+      canisterId: process.env.NEXT_PUBLIC_IC_CANISTER_ID!,
+    },
+    student: {
+      idlFactory: undefined,
+      canisterId: ""
+    },
+    school: {
+      idlFactory: schoolFactory,
+      canisterId: process.env.NEXT_PUBLIC_CANISTER_ID_SCHOOL!,
+    },
+    predict: {
+      idlFactory: undefined,
+      canisterId: ""
+    }
+  };
+
+  const { idlFactory, canisterId } = mapping[canisterName];
 
   return Actor.createActor(idlFactory, {
-    agent: actorAgent,
-    canisterId: CANISTER_ID,
+    agent,
+    canisterId,
   });
 };
-
-// Export a default actor instance if agent is successfully created
-export const actor = agent ? createActor() : null;
