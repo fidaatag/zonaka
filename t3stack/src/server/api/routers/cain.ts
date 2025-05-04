@@ -1,19 +1,15 @@
 import { z } from "zod";
-
-import {
-  createTRPCRouter,
-  publicProcedure,
-} from "@/server/api/trpc";
-import { actor } from "@/lib/icp/actor";
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { createActor } from "@/lib/icp/actor"; // 👈 ganti ke versi universal
 
 export const cainRouter = createTRPCRouter({
   great_cain: publicProcedure
     .input(z.object({ name: z.string() }))
     .query(async ({ input }) => {
-      const resolvedActor = await actor;
-      const result = resolvedActor?.greet ? await resolvedActor.greet(input.name) : "Default greeting t3-stack";
-      
+      const actor = await createActor(); // langsung aja
+      const result = await actor!.greet!(input.name);
+
       console.log("Result from ICP:", result);
       return { message: result };
     }),
-})
+});
