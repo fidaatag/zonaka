@@ -1,10 +1,13 @@
 // src/lib/icp/create-actor.ts
+
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Actor, HttpAgent, type ActorSubclass, type Identity } from "@dfinity/agent";
 import { idlFactory as baseFactory } from "./idl-factory";
 // import { idlFactory as studentFactory } from "./idl-factory-student";
-// import { idlFactory as schoolFactory } from "./idl-factory-school";
+import { idlFactorySchool as schoolFactory } from "./idl-factory-school";
 // import { idlFactory as predictFactory } from "./idl-factory-predict";
-import { env } from "@/env";
 
 type CanisterName = "base" | "student" | "school" | "predict";
 
@@ -16,7 +19,7 @@ export const createActor = async (
   identity?: Identity
 ): Promise<ActorSubclass<any>> => {
   const agent = new HttpAgent({
-    host: env.NEXT_PUBLIC_IC_HOST,
+    host: process.env.NEXT_PUBLIC_IC_HOST,
     identity,
   });
 
@@ -33,15 +36,15 @@ export const createActor = async (
   const mapping: Record<CanisterName, { idlFactory: any; canisterId: string }> = {
     base: {
       idlFactory: baseFactory,
-      canisterId: env.NEXT_PUBLIC_IC_CANISTER_ID,
+      canisterId: process.env.NEXT_PUBLIC_IC_CANISTER_ID!,
     },
     student: {
       idlFactory: undefined,
       canisterId: ""
     },
     school: {
-      idlFactory: undefined,
-      canisterId: ""
+      idlFactory: schoolFactory,
+      canisterId: process.env.NEXT_PUBLIC_CANISTER_ID_SCHOOL!,
     },
     predict: {
       idlFactory: undefined,

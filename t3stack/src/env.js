@@ -33,7 +33,9 @@ export const env = createEnv({
         // canister
         NEXT_PUBLIC_IC_HOST: z.string().url(),
         NEXT_PUBLIC_IC_CANISTER_ID: z.string(),
-        NEXT_PUBLIC_INTERNET_IDENTITY_CANISTER_ID: z.string()
+        NEXT_PUBLIC_INTERNET_IDENTITY_CANISTER_ID: z.string(),
+
+        NEXT_PUBLIC_CANISTER_ID_SCHOOL: z.string(),
   },
 
   /**
@@ -51,6 +53,7 @@ export const env = createEnv({
     NEXT_PUBLIC_IC_HOST: process.env.NEXT_PUBLIC_IC_HOST,
     NEXT_PUBLIC_IC_CANISTER_ID: process.env.NEXT_PUBLIC_IC_CANISTER_ID,
     NEXT_PUBLIC_INTERNET_IDENTITY_CANISTER_ID: process.env.NEXT_PUBLIC_INTERNET_IDENTITY_CANISTER_ID,
+    NEXT_PUBLIC_CANISTER_ID_SCHOOL: process.env.NEXT_PUBLIC_CANISTER_ID_SCHOOL
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

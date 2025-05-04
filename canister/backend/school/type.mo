@@ -10,7 +10,7 @@ module {
     longitude: Float;
     postalCode: Text;
     educationLevel: Text;
-    academicYear: Nat16; // misal: 2025
+    academicYear: Text;
 
     capacityZonasi: Nat;
     avgApplicantsZonasi: Nat;
