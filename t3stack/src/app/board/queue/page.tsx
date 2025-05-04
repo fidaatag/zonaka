@@ -1,5 +1,7 @@
 'use client'
 
+import CardListQueue from "@/components/card-list-queue"
+
 export default function PageQueue() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-4">
@@ -9,8 +11,8 @@ export default function PageQueue() {
       </div>
 
       {/* Komponen 1 di bawah saat mobile, di kiri saat desktop */}
-      <div className="order-2 md:order-1 border border-red-500 rounded-lg p-4">
-        1
+      <div className="order-2 md:order-1 rounded-lg">
+        <CardListQueue />
       </div>
     </div>
   )
