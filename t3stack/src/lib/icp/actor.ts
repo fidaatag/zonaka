@@ -1,12 +1,20 @@
 // src/lib/icp/create-actor.ts
-import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
-import { idlFactory } from "./idl-factory";
+import { Actor, HttpAgent, type ActorSubclass, type Identity } from "@dfinity/agent";
+import { idlFactory as baseFactory } from "./idl-factory";
+// import { idlFactory as studentFactory } from "./idl-factory-student";
+// import { idlFactory as schoolFactory } from "./idl-factory-school";
+// import { idlFactory as predictFactory } from "./idl-factory-predict";
 import { env } from "@/env";
+
+type CanisterName = "base" | "student" | "school" | "predict";
 
 /**
  * Universal actor creator usable both in server (SSR/tRPC) and client (React).
  */
-export const createActor = async (identity?: Identity) => {
+export const createActor = async (
+  canisterName: CanisterName = "base",
+  identity?: Identity
+): Promise<ActorSubclass<any>> => {
   const agent = new HttpAgent({
     host: env.NEXT_PUBLIC_IC_HOST,
     identity,
@@ -22,8 +30,29 @@ export const createActor = async (identity?: Identity) => {
     }
   }
 
+  const mapping: Record<CanisterName, { idlFactory: any; canisterId: string }> = {
+    base: {
+      idlFactory: baseFactory,
+      canisterId: env.NEXT_PUBLIC_IC_CANISTER_ID,
+    },
+    student: {
+      idlFactory: undefined,
+      canisterId: ""
+    },
+    school: {
+      idlFactory: undefined,
+      canisterId: ""
+    },
+    predict: {
+      idlFactory: undefined,
+      canisterId: ""
+    }
+  };
+
+  const { idlFactory, canisterId } = mapping[canisterName];
+
   return Actor.createActor(idlFactory, {
     agent,
-    canisterId: env.NEXT_PUBLIC_IC_CANISTER_ID,
+    canisterId,
   });
 };

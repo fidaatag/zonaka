@@ -16,7 +16,7 @@ export const useIcpAuth = () => {
   const initAuth = useCallback(async () => {
     const client = await AuthClient.create();
     const identity = client.getIdentity();
-    const backendActor = await createBackendActor(identity);
+    const backendActor = await createBackendActor("base", identity);
     const authenticated = await client.isAuthenticated();
 
     setAuthClient(client);
