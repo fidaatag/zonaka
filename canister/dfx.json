@@ -13,6 +13,18 @@
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       }
+    },
+    "student": {
+      "type": "motoko",
+      "main": "backend/student/main.mo"
+    },
+    "school": {
+      "type": "motoko",
+      "main": "backend/school/main.mo"
+    },
+    "predict": {
+      "type": "motoko",
+      "main": "backend/predict/main.mo"
     }
   },
   "networks": {
