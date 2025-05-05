@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AuthClient } from "@dfinity/auth-client";
-import { createActor as createBackendActor } from "@/lib/icp/actor.client";
+import { createActor as createBackendActor } from "@/lib/icp/actor"; // 👈 ganti ke versi universal
 import type { ActorSubclass, Identity } from "@dfinity/agent";
 import { env } from "@/env"; // pastikan import env
 
@@ -16,7 +16,7 @@ export const useIcpAuth = () => {
   const initAuth = useCallback(async () => {
     const client = await AuthClient.create();
     const identity = client.getIdentity();
-    const backendActor = await createBackendActor(identity);
+    const backendActor = await createBackendActor("base", identity);
     const authenticated = await client.isAuthenticated();
 
     setAuthClient(client);
