@@ -74,8 +74,8 @@ module {
                 eligible = true;
                 chancePercentage = 75.0; // Dummy untuk sekarang
                 ratio = "N/A";
-                capacity = school.capacityPrestasi;
-                estimatedApplicants = school.avgApplicantsPrestasi;
+                capacity = Float.fromInt(school.capacityPrestasi);
+                estimatedApplicants = Float.fromInt(school.avgApplicantsPrestasi);
                 radiusKm = 0.0;
                 distanceFromHomeKm = 0.0;
                 note = "Memenuhi syarat jalur prestasi.";
@@ -150,8 +150,8 @@ module {
         eligible = eligible;
         chancePercentage = chance;
         ratio = ratioText;
-        capacity = capacity;
-        estimatedApplicants = estimated;
+        capacity = Float.fromInt(capacity);
+        estimatedApplicants = Float.fromInt(estimated);
         radiusKm = school.zoningRadiusKm;
         distanceFromHomeKm = distanceKm;
         note = if (eligible) {

@@ -25,17 +25,17 @@ module {
     educationLevel : Text;
     schoolId : Text;
     schoolName : Text;
-    entryYear : Nat16;
+    entryYear : Float;
     isCurrent : Bool;
     academicRecords : [AcademicRecord];
   };
 
   public type AcademicRecord = {
     gradeId : Text; // ?? ini id nya apa ?
-    semester : Nat8;
-    year : Nat16;
-    gradeLevel : Nat8;
-    total : Nat16;
+    semester : Float;
+    year : Float;
+    gradeLevel : Float;
+    total : Float;
     average : Float;
     subjects : [SubjectGrade];
   };
@@ -82,8 +82,8 @@ module {
     note : Text;
     radiusKm : Float;
     distanceFromHomeKm : Float;
-    capacity : Nat;
-    estimatedApplicants : Nat;
+    capacity : Float;
+    estimatedApplicants : Float;
     isTarget : Bool; // true = user input, false = rekomendasi tambahan
   };
 

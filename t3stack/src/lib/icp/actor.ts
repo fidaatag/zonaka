@@ -5,7 +5,7 @@ dotenv.config();
 
 import { Actor, HttpAgent, type ActorSubclass, type Identity } from "@dfinity/agent";
 import { idlFactory as baseFactory } from "./idl-factory";
-// import { idlFactory as studentFactory } from "./idl-factory-student";
+import { idlFactoryStudent as studentFactory } from "./idl-factory-student";
 import { idlFactorySchool as schoolFactory } from "./idl-factory-school";
 // import { idlFactory as predictFactory } from "./idl-factory-predict";
 
@@ -39,8 +39,8 @@ export const createActor = async (
       canisterId: process.env.NEXT_PUBLIC_IC_CANISTER_ID!,
     },
     student: {
-      idlFactory: undefined,
-      canisterId: ""
+      idlFactory: studentFactory,
+      canisterId: process.env.NEXT_PUBLIC_CANISTER_ID_STUDENT!,
     },
     school: {
       idlFactory: schoolFactory,

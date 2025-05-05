@@ -13,6 +13,7 @@ export default function PageQueue() {
     principal,
     isAuthenticated,
     authClientReady,
+    authClient
   } = useIcpAuth()
 
   return (
@@ -43,7 +44,7 @@ export default function PageQueue() {
 
       {/* Komponen 1 - Card List Queue */}
       <div className="order-2 md:order-1 rounded-lg">
-        <CardListQueue />
+        <CardListQueue principal={principal!} identity={authClient?.getIdentity()}/>
       </div>
     </div>
   )
