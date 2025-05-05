@@ -55,5 +55,30 @@ export const cainRouter = createTRPCRouter({
       }
     }),
 
+  // mark succes resume was send
+  markBulkPushResultByStudentIds: protectedProcedure
+    .input(z.object({
+      studentIds: z.array(z.string()),
+      results: z.array(z.boolean()),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const updates = await Promise.all(
+        input.studentIds.map((studentId, index) =>
+          ctx.db.queuePushChain.updateMany({
+            where: { studentId },
+            data: {
+              status: input.results[index] ? "pushed" : "failed",
+              processedAt: new Date(),
+            },
+          })
+        )
+      );
+      return {
+        success: true,
+        message: "Data berhasil di kirim ke cain",
+        data: updates
+      }
+    }),
+
 
 })

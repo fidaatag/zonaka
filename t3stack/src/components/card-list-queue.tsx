@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { createActor } from "@/lib/icp/actor";
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { toast } from "sonner";
 
 
 interface CardListQueueProps {
@@ -15,6 +16,10 @@ interface CardListQueueProps {
 
 const CardListQueue: React.FC<CardListQueueProps> = ({ principal, identity }) => {
   const { data, isLoading, isError } = api.cain.getAllQueuesByParent.useQuery();
+
+  const markResume = api.cain.markBulkPushResultByStudentIds.useMutation({
+    onSuccess: () => toast.success("Data berhasil dikirimkan ke cain"),
+  })
 
   const handelSubmitToCain = async () => {
 
@@ -68,7 +73,13 @@ const CardListQueue: React.FC<CardListQueueProps> = ({ principal, identity }) =>
     try {
       const result = await actor.submitMultipleResumes(resumes);
       console.log("✅ Hasil push:", result);
-      alert("Berhasil submit ke Cain!");
+
+      markResume.mutate({
+        studentIds: resumes.map((r) => r.studentId),
+        results: result,
+      })
+
+
     } catch (err) {
       console.error("❌ Gagal submit ke Cain:", err);
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
