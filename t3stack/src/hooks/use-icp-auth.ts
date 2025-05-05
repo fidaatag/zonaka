@@ -80,6 +80,7 @@ export const useIcpAuth = () => {
     principal,
     isAuthenticated,
     actor,
+    authClient,
     authClientReady, // 🚀 tambahan
   };
 };

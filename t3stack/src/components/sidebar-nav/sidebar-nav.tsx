@@ -159,6 +159,11 @@ const data = {
       url: "/cain",
       icon: Map,
     },
+    {
+      name: "Queue",
+      url: "/board/queue",
+      icon: Map,
+    },
   ],
 }
 
